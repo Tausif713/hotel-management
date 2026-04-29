@@ -14,7 +14,12 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
-const MENU: any[] = [];
+const MENU: any[] = [
+  { id: '1', name: 'Butter Naan', category: 'Breads', price: 45, rating: 4.8, spicy: 0, isVeg: true, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=300&q=80', description: 'Soft and buttery Indian flatbread' },
+  { id: '2', name: 'Paneer Tikka', category: 'Starter', price: 240, rating: 4.9, spicy: 2, isVeg: true, image: 'https://images.unsplash.com/photo-1599487405270-86430f8e589b?auto=format&fit=crop&w=300&q=80', description: 'Grilled cottage cheese with spices' },
+  { id: '3', name: 'Chicken Biryani', category: 'Main Course', price: 320, rating: 4.7, spicy: 3, isVeg: false, image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=300&q=80', description: 'Aromatic basmati rice cooked with tender chicken' },
+  { id: '4', name: 'Veg Pasta', category: 'Main Course', price: 180, rating: 4.5, spicy: 1, isVeg: true, image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=300&q=80', description: 'Penne pasta in mixed sauce with veggies' },
+];
 
 export default function CustomerMenu() {
   const { id } = useParams();
@@ -48,6 +53,25 @@ export default function CustomerMenu() {
     (activeCategory === 'All' || item.category === activeCategory) &&
     (item.name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const handleCheckout = () => {
+    if (cart.length === 0) return;
+    const newOrder = {
+      id: Math.floor(1000 + Math.random() * 9000).toString(),
+      table: id || 'Unknown',
+      status: 'pending',
+      priority: 'normal',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      items: cart.map(item => ({ name: item.name, qty: item.qty, note: '' }))
+    };
+    
+    // Save to localStorage for KitchenPanel
+    const existingOrders = JSON.parse(localStorage.getItem('restaurant_orders') || '[]');
+    localStorage.setItem('restaurant_orders', JSON.stringify([newOrder, ...existingOrders]));
+    
+    setCart([]);
+    alert('Order placed successfully! The kitchen has received your order.');
+  };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans max-w-md mx-auto relative shadow-2xl h-screen overflow-hidden border-x border-slate-200">
@@ -195,7 +219,7 @@ export default function CustomerMenu() {
                 <h4 className="text-2xl font-black text-white tracking-tighter">₹{total}</h4>
               </div>
             </div>
-            <button className="px-8 py-4 bg-white text-slate-900 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 active:scale-95 transition-all shadow-xl hover:bg-indigo-50 group">
+            <button onClick={handleCheckout} className="px-8 py-4 bg-white text-slate-900 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 active:scale-95 transition-all shadow-xl hover:bg-indigo-50 group">
               Checkout
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>

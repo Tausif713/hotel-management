@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Clock, 
   CheckCircle2, 
@@ -13,10 +13,22 @@ import { cn } from '../lib/utils';
 const INITIAL_ORDERS: any[] = [];
 
 export default function KitchenPanel() {
-  const [orders, setOrders] = useState(INITIAL_ORDERS);
+  const [orders, setOrders] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchOrders = () => {
+      const stored = JSON.parse(localStorage.getItem('restaurant_orders') || '[]');
+      setOrders(stored);
+    };
+    fetchOrders();
+    const interval = setInterval(fetchOrders, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   const moveOrder = (id: string, nextStatus: string) => {
-    setOrders(orders.map(o => o.id === id ? { ...o, status: nextStatus } : o));
+    const updated = orders.map(o => o.id === id ? { ...o, status: nextStatus } : o);
+    setOrders(updated);
+    localStorage.setItem('restaurant_orders', JSON.stringify(updated));
   };
 
   const columns = [
