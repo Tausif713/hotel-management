@@ -41,7 +41,25 @@ export default function Login() {
         
         if (data.session) {
           localStorage.setItem('isAuthenticated', 'true');
-          navigate('/');
+          
+          // Check for staff role
+          const { data: staffData } = await supabase
+            .from('app_staff')
+            .select('role')
+            .eq('email', email)
+            .single();
+          
+          const role = staffData?.role || 'Admin';
+          localStorage.setItem('userRole', role);
+
+          // Role-based redirection
+          if (role === 'Chef') {
+            navigate('/kitchen');
+          } else if (role === 'Waiter') {
+            navigate('/counter');
+          } else {
+            navigate('/');
+          }
         }
       }
     } catch (error: any) {

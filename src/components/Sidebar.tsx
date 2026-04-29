@@ -37,12 +37,22 @@ const menuItems = [
 export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const userRole = localStorage.getItem('userRole') || 'Admin';
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('userRole');
     navigate('/login');
   };
+
+  const filteredMenuItems = menuItems.filter(item => {
+    if (userRole === 'Admin') return true;
+    if (userRole === 'Chef') return ['Kitchen Panel', 'Orders'].includes(item.label);
+    if (userRole === 'Waiter') return ['Counter Panel', 'Table Management', 'Orders'].includes(item.label);
+    if (userRole === 'Cashier') return ['Counter Panel', 'Billing', 'All Orders', 'Table Billing'].includes(item.label);
+    return false;
+  });
 
   return (
     <aside className="w-[280px] h-screen bg-[#0f172a] text-slate-300 flex flex-col z-50 sticky top-0 overflow-hidden border-r border-white/5">
@@ -59,14 +69,14 @@ export default function Sidebar() {
           </div>
           <div className="min-w-0">
             <h1 className="text-xl font-black text-white leading-tight tracking-tight truncate">Hotel Management</h1>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] truncate">Restaurant System</p>
+            <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-[0.2em] truncate mt-0.5">{userRole} Panel</p>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1.5 scrollbar-thin scrollbar-thumb-slate-800">
-        {menuItems.map((item) => {
+        {filteredMenuItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <NavLink
