@@ -67,7 +67,7 @@ export default function QRCodePage() {
                 <div className="absolute inset-0 bg-indigo-500/10 blur-3xl rounded-full group-hover:bg-indigo-500/20 transition-all duration-500" />
                 <div className="relative bg-white p-12 rounded-[2.5rem] border-4 border-slate-900 shadow-2xl transition-transform duration-500 group-hover:scale-105">
                    <img 
-                     src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(window.location.origin + '/customer-menu/' + selectedTable)}`}
+                     src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent('https://hotel-management-yam3.vercel.app/customer-menu/' + selectedTable)}`}
                      alt={`QR Code for ${selectedTable}`} 
                      className="w-48 h-48 rounded-xl mix-blend-multiply" 
                    />
