@@ -156,6 +156,7 @@ export default function CounterPanel() {
     });
     
     if (!error) {
+      await supabase.from('app_tables').update({ status: 'occupied', occupied_since: 'Just Now' }).eq('number', selectedTableId);
       alert('KOT Sent to Kitchen!');
     } else {
       alert('Failed to send KOT: ' + error.message);

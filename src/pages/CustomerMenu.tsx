@@ -89,6 +89,8 @@ export default function CustomerMenu() {
       alert('Error placing order: ' + error.message);
       return;
     }
+
+    await supabase.from('app_tables').update({ status: 'occupied', occupied_since: 'Just Now' }).eq('number', id || 'Unknown');
     
     // Also save to local storage as backup/immediate feedback
     const existingOrders = JSON.parse(localStorage.getItem('restaurant_orders') || '[]');
