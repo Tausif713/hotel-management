@@ -6,8 +6,6 @@ import {
   Filter, 
   Printer, 
   Share2, 
-  Smartphone,
-  CreditCard,
   Banknote,
   MoreVertical,
   ChevronRight
