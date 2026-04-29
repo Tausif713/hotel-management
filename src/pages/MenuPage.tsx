@@ -49,17 +49,33 @@ export default function MenuPage() {
   const [search, setSearch] = useState('');
 
   const handleAddProduct = async () => {
+    const name = window.prompt("Enter product name:");
+    if (!name) return;
+    
+    const priceStr = window.prompt("Enter price:", "150");
+    if (!priceStr) return;
+    const price = parseFloat(priceStr);
+
+    const category = window.prompt("Enter category (Starters, Main Course, Desserts, Beverages):", "Main Course");
+    if (!category) return;
+
     const newItem = {
-      name: `New Item ${Math.floor(1000 + Math.random() * 9000)}`,
-      category: 'Main Course',
-      price: 150,
+      name,
+      category,
+      price: isNaN(price) ? 150 : price,
       is_veg: true,
       is_available: true,
       spicy: 1,
       image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&q=80',
       description: 'A delicious new dish'
     };
-    await supabase.from('app_menu').insert(newItem);
+
+    const { error } = await supabase.from('app_menu').insert(newItem);
+    if (error) {
+      alert("Failed to add product: " + error.message);
+    } else {
+      alert("Product added successfully!");
+    }
   };
 
   const handleDelete = async (id: string) => {
