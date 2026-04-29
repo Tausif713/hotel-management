@@ -1,4 +1,5 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 import { 
   LayoutDashboard, 
   TableProperties as TableIcon, 
@@ -37,7 +38,8 @@ export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem('isAuthenticated');
     navigate('/login');
   };
