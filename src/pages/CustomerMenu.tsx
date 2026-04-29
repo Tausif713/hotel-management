@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { 
@@ -13,7 +13,7 @@ import {
   Clock,
   ChevronLeft
 } from 'lucide-react';
-const INITIAL_MENU: any[] = [];
+import { cn } from '../lib/utils';
 
 export default function CustomerMenu() {
   const { id } = useParams();

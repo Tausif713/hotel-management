@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
-const INITIAL_ORDERS: any[] = [];
+
 
 export default function KitchenPanel() {
   const [orders, setOrders] = useState<any[]>([]);

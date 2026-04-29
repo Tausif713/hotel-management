@@ -15,7 +15,7 @@ import { cn } from '../lib/utils';
 
 const CATEGORIES = ['All Items', 'Starters', 'Main Course', 'Desserts', 'Beverages', 'Breads'];
 
-const INITIAL_MENU: any[] = [];
+
 
 export default function MenuPage() {
   const [menu, setMenu] = useState<any[]>([]);

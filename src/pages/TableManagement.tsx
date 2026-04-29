@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
-const INITIAL_TABLES: any[] = [];
+
 
 export default function TableManagement() {
   const [filter, setFilter] = useState('All');

@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
-const TABLES: any[] = [];
+
 
 export default function QRCodePage() {
   const [tables, setTables] = useState<any[]>([]);

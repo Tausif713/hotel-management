@@ -19,6 +19,7 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 import { cn } from '../lib/utils';
+import { supabase } from '../lib/supabase';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -53,11 +54,7 @@ const StatCard = ({ label, value, trend, trendColor, icon: Icon, colorClass, sub
 );
 
 const topSellingItems: any[] = [];
-
-const recentOrders: any[] = [];
-
 const tableStats: any[] = [];
-
 const staffOverview: any[] = [];
 
 export default function Dashboard() {
@@ -65,15 +62,19 @@ export default function Dashboard() {
   const [stats, setStats] = useState({ sales: 0, orders: 0 });
 
   useEffect(() => {
-    const fetchOrders = () => {
-      const stored = JSON.parse(localStorage.getItem('restaurant_orders') || '[]');
-      setRecentOrders(stored.slice(0, 5));
-      const totalSales = stored.reduce((sum: number, o: any) => sum + (o.items?.reduce((s: number, i: any) => s + (i.qty * (i.price || 0)), 0) || 0), 0);
-      setStats({ sales: totalSales, orders: stored.length });
+    const fetchOrders = async () => {
+      const { data, error } = await supabase.from('app_orders').select('*').order('created_at', { ascending: false }).limit(5);
+      if (data && !error) {
+        setRecentOrders(data);
+        const totalSales = data.reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0);
+        setStats({ sales: totalSales, orders: data.length });
+      }
     };
     fetchOrders();
-    const interval = setInterval(fetchOrders, 2000);
-    return () => clearInterval(interval);
+    const subscription = supabase.channel('dashboard_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_orders' }, fetchOrders)
+      .subscribe();
+    return () => { supabase.removeChannel(subscription); };
   }, []);
 
   return (
@@ -261,8 +262,8 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="text-right">
-                   <p className="text-sm font-black text-slate-900">₹{order.items?.reduce((sum: number, i: any) => sum + (i.qty * (i.price || 0)), 0)}</p>
-                   <p className="text-[10px] text-slate-400 font-bold">{order.time}</p>
+                   <p className="text-sm font-black text-slate-900">₹{order.total_amount || 0}</p>
+                   <p className="text-[10px] text-slate-400 font-bold">{new Date(order.created_at).toLocaleTimeString()}</p>
                 </div>
               </div>
             ))}
