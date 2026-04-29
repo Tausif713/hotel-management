@@ -53,19 +53,18 @@ export default function BillingPage() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Today Revenue', value: '₹ 45,680', trend: '+12.5%', color: 'from-indigo-600 to-purple-600' },
-          { label: 'Paid Bills', value: '112', trend: '+8.2%', color: 'from-emerald-600 to-teal-600' },
-          { label: 'Pending Amount', value: '₹ 2,450', trend: '-2.4%', color: 'from-orange-600 to-amber-600' },
-          { label: 'Refunds', value: '₹ 420', trend: '+0.5%', color: 'from-rose-600 to-pink-600' },
+          { label: 'Total Revenue', value: `₹ ${invoices.filter(i => i.status === 'completed').reduce((sum, i) => sum + (i.total_amount || 0), 0)}`, trend: 'Active', color: 'from-indigo-600 to-purple-600' },
+          { label: 'Paid Bills', value: invoices.filter(i => i.status === 'completed').length.toString(), trend: 'Active', color: 'from-emerald-600 to-teal-600' },
+          { label: 'Pending Amount', value: `₹ ${invoices.filter(i => i.status !== 'completed').reduce((sum, i) => sum + (i.total_amount || 0), 0)}`, trend: 'Active', color: 'from-orange-600 to-amber-600' },
+          { label: 'Refunds', value: '₹ 0', trend: 'N/A', color: 'from-rose-600 to-pink-600' },
         ].map((card, i) => (
           <div key={i} className={cn("p-6 rounded-[2rem] text-white relative overflow-hidden group shadow-lg", card.color)}>
              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-110 transition-transform duration-700" />
              <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2 relative z-10">{card.label}</p>
              <h3 className="text-3xl font-black relative z-10">{card.value}</h3>
-             <div className="mt-4 flex items-center gap-2 relative z-10">
-                <span className="text-[10px] font-black bg-white/20 px-2 py-0.5 rounded-md">{card.trend}</span>
-                <span className="text-[8px] font-bold opacity-60 uppercase tracking-widest">vs Yesterday</span>
-             </div>
+              <div className="mt-4 flex items-center gap-2 relative z-10">
+                 <span className="text-[10px] font-black bg-white/20 px-2 py-0.5 rounded-md">{card.trend}</span>
+              </div>
           </div>
         ))}
       </div>

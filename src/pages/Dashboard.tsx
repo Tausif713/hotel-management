@@ -59,20 +59,33 @@ const staffOverview: any[] = [];
 
 export default function Dashboard() {
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
-  const [stats, setStats] = useState({ sales: 0, orders: 0 });
+  const [stats, setStats] = useState({ sales: 0, orders: 0, activeTables: 0, totalTables: 0 });
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      const { data, error } = await supabase.from('app_orders').select('*').order('created_at', { ascending: false }).limit(5);
-      if (data && !error) {
-        setRecentOrders(data);
-        const totalSales = data.reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0);
-        setStats({ sales: totalSales, orders: data.length });
+    const fetchData = async () => {
+      const [{ data: orders }, { data: tables }] = await Promise.all([
+        supabase.from('app_orders').select('*').order('created_at', { ascending: false }).limit(5),
+        supabase.from('app_tables').select('*')
+      ]);
+
+      if (orders) {
+        setRecentOrders(orders);
+        const totalSales = orders.reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0);
+        
+        let activeTbls = 0;
+        let totalTbls = 0;
+        if (tables) {
+          totalTbls = tables.length;
+          activeTbls = tables.filter(t => t.status !== 'free').length;
+        }
+
+        setStats({ sales: totalSales, orders: orders.length, activeTables: activeTbls, totalTables: totalTbls });
       }
     };
-    fetchOrders();
+    fetchData();
     const subscription = supabase.channel('dashboard_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_orders' }, fetchOrders)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_orders' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_tables' }, fetchData)
       .subscribe();
     return () => { supabase.removeChannel(subscription); };
   }, []);
@@ -124,34 +137,28 @@ export default function Dashboard() {
         <StatCard 
           label="Total Sales" 
           value={`₹ ${stats.sales}`}
-          trend="+12.5%" 
-          trendColor="text-emerald-500"
-          subtext="from yesterday"
+          subtext="Total revenue"
           icon={DollarSign} 
           colorClass="bg-purple-100 text-purple-600" 
         />
         <StatCard 
           label="Total Orders" 
           value={stats.orders.toString()} 
-          trend="+8.3%" 
-          trendColor="text-emerald-500"
-          subtext="from yesterday"
+          subtext="Total orders placed"
           icon={ShoppingCart} 
           colorClass="bg-emerald-100 text-emerald-600" 
         />
         <StatCard 
           label="Active Tables" 
-          value="18 / 40" 
-          subtext="45% Occupied"
+          value={`${stats.activeTables} / ${stats.totalTables}`} 
+          subtext={`${stats.totalTables > 0 ? Math.round((stats.activeTables / stats.totalTables) * 100) : 0}% Occupied`}
           icon={Users} 
           colorClass="bg-blue-100 text-blue-600" 
         />
         <StatCard 
           label="Total Bills" 
           value={stats.orders.toString()} 
-          trend="+10.2%" 
-          trendColor="text-emerald-500"
-          subtext="from yesterday"
+          subtext="Generated bills"
           icon={Receipt} 
           colorClass="bg-orange-100 text-orange-600" 
         />
