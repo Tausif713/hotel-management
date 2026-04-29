@@ -39,7 +39,7 @@ export default function BillingPage() {
           <p className="text-sm text-slate-500 mt-1 font-medium">Manage payments, generate receipts, and track financial history</p>
         </div>
         <div className="flex gap-4">
-           <button className="px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl text-sm font-black flex items-center gap-2 hover:bg-slate-50 transition-all shadow-sm">
+           <button onClick={() => window.print()} className="px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl text-sm font-black flex items-center gap-2 hover:bg-slate-50 transition-all shadow-sm">
             <Printer className="w-5 h-5 opacity-50" />
             PRINT DAY REPORT
           </button>
