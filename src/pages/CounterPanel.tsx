@@ -388,22 +388,22 @@ export default function CounterPanel() {
 
         {/* Right Col: Billing - POS Style Receipt */}
         <div className="flex-[1.5] flex flex-col bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-2xl relative">
-          <div className="p-8 border-b border-dashed border-slate-200">
+          <div className="p-6 border-b border-dashed border-slate-200">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-black text-slate-900 tracking-tight">Table {selectedTableId}</h3>
-                <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">Order Details</p>
+                <h3 className="text-lg font-bold text-slate-900 tracking-tight">Table {selectedTableId}</h3>
+                <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-0.5">Order Details</p>
               </div>
               <button 
                  onClick={() => setShowAddItem(true)}
-                 className="bg-slate-900 text-white p-3 rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all"
+                 className="bg-slate-900 text-white p-2.5 rounded-xl shadow-lg hover:scale-110 active:scale-95 transition-all"
               >
-                 <Plus className="w-5 h-5" />
+                 <Plus className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-8 py-6 scrollbar-hide">
+          <div className="flex-1 overflow-y-auto px-6 py-4 scrollbar-hide">
             {currentBillItems.length > 0 ? (
               <div className="space-y-6">
                 {currentBillItems.map((item: any, i: number) => (
@@ -455,25 +455,25 @@ export default function CounterPanel() {
             )}
           </div>
 
-          <div className="p-8 bg-slate-50/80 backdrop-blur-md border-t border-dashed border-slate-200">
-            <div className="space-y-4 mb-8">
-              <div className="flex items-center justify-between text-[11px] font-black text-slate-400 uppercase tracking-widest">
+          <div className="p-6 bg-slate-50/80 backdrop-blur-md border-t border-dashed border-slate-200">
+            <div className="space-y-2.5 mb-6">
+              <div className="flex items-center justify-between text-[9px] font-bold text-slate-400 uppercase tracking-widest">
                 <span>Sub Total</span>
                 <span className="text-slate-900">₹ {subTotal}</span>
               </div>
-              <div className="flex items-center justify-between text-[11px] font-black text-slate-400 uppercase tracking-widest">
+              <div className="flex items-center justify-between text-[9px] font-bold text-slate-400 uppercase tracking-widest">
                 <span>Tax (GST 5%)</span>
                 <span className="text-slate-900">₹ {tax}</span>
               </div>
-            <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
-                <span className="text-lg font-black text-slate-900 uppercase tracking-tighter">Total Amount</span>
-                <span className="text-3xl font-black text-slate-900 tracking-tighter">₹ {total}</span>
+              <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
+                <span className="text-sm font-bold text-slate-900 uppercase tracking-tighter">Total Amount</span>
+                <span className="text-2xl font-bold text-slate-900 tracking-tighter">₹ {total}</span>
               </div>
             </div>
 
             <div className="space-y-4">
                {/* Payment Methods Integration */}
-               <div className="bg-white rounded-2xl border border-slate-200 p-2 flex items-center justify-between gap-1">
+               <div className="bg-white rounded-xl border border-slate-200 p-1.5 flex items-center justify-between gap-1">
                   {[
                     { label: 'Cash', icon: Banknote, bg: 'hover:bg-emerald-50 hover:text-emerald-600', active: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
                     { label: 'Card', icon: CreditCard, bg: 'hover:bg-blue-50 hover:text-blue-600', active: 'bg-blue-50 text-blue-600 border-blue-100' },
@@ -482,12 +482,12 @@ export default function CounterPanel() {
                     <button 
                        key={i} 
                        className={cn(
-                          "flex-1 py-3 rounded-xl flex flex-col items-center gap-1.5 border border-transparent transition-all",
+                          "flex-1 py-2.5 rounded-lg flex flex-col items-center gap-1 border border-transparent transition-all",
                           i === 0 ? p.active : `text-slate-400 ${p.bg}`
                        )}
                     >
-                       <p.icon className="w-4 h-4" />
-                       <span className="text-[9px] font-black uppercase tracking-widest">{p.label}</span>
+                       <p.icon className="w-3.5 h-3.5" />
+                       <span className="text-[8px] font-bold uppercase tracking-widest">{p.label}</span>
                     </button>
                   ))}
                </div>
@@ -496,13 +496,13 @@ export default function CounterPanel() {
                   onClick={handleGenerateBill}
                   disabled={currentBillItems.length === 0}
                   className={cn(
-                     "w-full py-5 rounded-3xl font-black text-sm uppercase tracking-[0.2em] transition-all shadow-2xl flex items-center justify-center gap-4 group/btn",
+                     "w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] transition-all shadow-xl flex items-center justify-center gap-3 group/btn",
                      currentBillItems.length > 0 
-                      ? "bg-[#10b981] hover:bg-[#059669] text-white shadow-emerald-200/50 hover:-translate-y-1 active:translate-y-0" 
+                      ? "bg-[#10b981] hover:bg-[#059669] text-white shadow-emerald-100 hover:-translate-y-0.5" 
                       : "bg-slate-200 text-slate-400 cursor-not-allowed"
                   )}
                >
-                  <Printer className="w-6 h-6 group-hover/btn:rotate-12 transition-transform" />
+                  <Printer className="w-5 h-5 group-hover/btn:rotate-12 transition-transform" />
                   GENERATE BILL
                </button>
 
@@ -519,8 +519,8 @@ export default function CounterPanel() {
             </div>
           </div>
         </div>
-
       </div>
+
 
       {/* Add Item Modal */}
       {showAddItem && (
