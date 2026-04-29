@@ -407,10 +407,10 @@ export default function CounterPanel() {
             {currentBillItems.length > 0 ? (
               <div className="space-y-6">
                 {currentBillItems.map((item: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between group animate-in slide-in-from-right duration-300" style={{ animationDelay: `${i * 50}ms` }}>
+                  <div key={i} className="flex items-center justify-between group animate-in slide-in-from-right duration-300 border-b border-slate-50 pb-4 last:border-0" style={{ animationDelay: `${i * 50}ms` }}>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-black text-slate-800">{item.name}</p>
+                        <p className="text-sm font-medium text-slate-800">{item.name}</p>
                         {item.isNew && <span className="text-[8px] bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">NEW</span>}
                       </div>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">₹{item.price} x {item.qty}</p>
@@ -465,13 +465,33 @@ export default function CounterPanel() {
                 <span>Tax (GST 5%)</span>
                 <span className="text-slate-900">₹ {tax}</span>
               </div>
-              <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
+            <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
                 <span className="text-lg font-black text-slate-900 uppercase tracking-tighter">Total Amount</span>
                 <span className="text-3xl font-black text-slate-900 tracking-tighter">₹ {total}</span>
               </div>
             </div>
 
             <div className="space-y-4">
+               {/* Payment Methods Integration */}
+               <div className="bg-white rounded-2xl border border-slate-200 p-2 flex items-center justify-between gap-1">
+                  {[
+                    { label: 'Cash', icon: Banknote, bg: 'hover:bg-emerald-50 hover:text-emerald-600', active: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
+                    { label: 'Card', icon: CreditCard, bg: 'hover:bg-blue-50 hover:text-blue-600', active: 'bg-blue-50 text-blue-600 border-blue-100' },
+                    { label: 'UPI', icon: Smartphone, bg: 'hover:bg-purple-50 hover:text-purple-600', active: 'bg-purple-50 text-purple-600 border-purple-100' },
+                  ].map((p, i) => (
+                    <button 
+                       key={i} 
+                       className={cn(
+                          "flex-1 py-3 rounded-xl flex flex-col items-center gap-1.5 border border-transparent transition-all",
+                          i === 0 ? p.active : `text-slate-400 ${p.bg}`
+                       )}
+                    >
+                       <p.icon className="w-4 h-4" />
+                       <span className="text-[9px] font-black uppercase tracking-widest">{p.label}</span>
+                    </button>
+                  ))}
+               </div>
+
                <button 
                   onClick={handleGenerateBill}
                   disabled={currentBillItems.length === 0}
@@ -561,22 +581,6 @@ export default function CounterPanel() {
                     History
                  </Link>
               </div>
-           </div>
-        </div>
-
-        <div className="space-y-4">
-           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payment Methods</p>
-           <div className="flex items-center gap-3">
-              {[
-                { label: 'Cash', icon: Banknote, bg: 'bg-emerald-50', text: 'text-emerald-600' },
-                { label: 'Card', icon: CreditCard, bg: 'bg-blue-50', text: 'text-blue-600' },
-                { label: 'UPI', icon: Smartphone, bg: 'bg-purple-50', text: 'text-purple-600' },
-              ].map((p, i) => (
-                <button key={i} className={cn("px-6 py-2.5 rounded-xl flex items-center gap-3 border border-transparent transition-all hover:bg-white hover:border-slate-200 hover:shadow-sm", p.bg, p.text)}>
-                   <p.icon className="w-4 h-4" />
-                   <span className="text-[10px] font-black uppercase tracking-widest">{p.label}</span>
-                </button>
-              ))}
            </div>
         </div>
       </div>
