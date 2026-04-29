@@ -45,12 +45,25 @@ export default function CounterPanel() {
       if (menuRes.data) setMenuItems(menuRes.data);
     };
     fetchAll();
-  }, []);
+    const subscription = supabase.channel('counter_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_tables' }, fetchAll)
+      .subscribe();
+    return () => { supabase.removeChannel(subscription); };
+  }, [selectedTableId]);
 
   const currentBillItems = bills[selectedTableId] || [];
   const subTotal = currentBillItems.reduce((acc: number, item: any) => acc + (item.price * item.qty), 0);
   const tax = Math.round(subTotal * 0.05);
   const total = subTotal + tax;
+
+  useEffect(() => {
+    if (selectedTableId && total >= 0) {
+      const currentTable = tables.find(t => t.number === selectedTableId);
+      if (currentTable && currentTable.status === 'occupied') {
+        supabase.from('app_tables').update({ bill_amount: `₹ ${total}` }).eq('number', selectedTableId).then();
+      }
+    }
+  }, [total, selectedTableId]);
 
   const handleUpdateQty = (itemName: string, delta: number) => {
     const updatedItems = currentBillItems.map((item: any) => {
@@ -67,24 +80,34 @@ export default function CounterPanel() {
     setBills({ ...bills, [selectedTableId]: updatedItems });
   };
 
-  const handleAddItem = (menuItem: any) => {
+  const handleAddItem = async (menuItem: any) => {
     const existingItem = currentBillItems.find((item: any) => item.name === menuItem.name);
+    let updatedItems;
     if (existingItem) {
-      handleUpdateQty(menuItem.name, 1);
+      updatedItems = currentBillItems.map((item: any) => {
+        if (item.name === menuItem.name) {
+          return { ...item, qty: Math.max(1, item.qty + 1) };
+        }
+        return item;
+      });
     } else {
-      const updatedItems = [...currentBillItems, { ...menuItem, qty: 1 }];
-      setBills({ ...bills, [selectedTableId]: updatedItems });
-      
-      // Update table status to in-use if it was available or occupied
-      setTables(tables.map(t => t.id === selectedTableId ? { ...t, status: 'in-use' } : t));
+      updatedItems = [...currentBillItems, { ...menuItem, qty: 1 }];
     }
+    setBills({ ...bills, [selectedTableId]: updatedItems });
+    
+    // Update table status in Supabase
+    const currentTable = tables.find(t => t.number === selectedTableId);
+    if (currentTable && currentTable.status !== 'occupied') {
+      await supabase.from('app_tables').update({ status: 'occupied', occupied_since: 'Just Now' }).eq('number', selectedTableId);
+    }
+    
+    // Refresh tables to trigger re-render properly if needed, though real-time should handle it.
   };
 
-  const handleGenerateBill = () => {
+  const handleGenerateBill = async () => {
     alert(`Bill Generated for ${selectedTableId}! Total: ₹${total}`);
-    // Reset table
     setBills({ ...bills, [selectedTableId]: [] });
-    setTables(tables.map(t => t.id === selectedTableId ? { ...t, status: 'available' } : t));
+    await supabase.from('app_tables').update({ status: 'free', bill_amount: '-', occupied_since: '-' }).eq('number', selectedTableId);
   };
 
   return (

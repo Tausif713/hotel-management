@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { 
   Search, 
   Filter, 
@@ -10,20 +11,22 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
-const ORDERS: any[] = [];
-
 export default function AllOrders() {
   const [activeFilter, setActiveFilter] = useState('All Orders');
-  const [ORDERS, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchOrders = () => {
-      const stored = JSON.parse(localStorage.getItem('restaurant_orders') || '[]');
-      setOrders(stored);
+    const fetchOrders = async () => {
+      const { data, error } = await supabase.from('app_orders').select('*').order('created_at', { ascending: false });
+      if (data && !error) {
+        setOrders(data);
+      }
     };
     fetchOrders();
-    const interval = setInterval(fetchOrders, 2000);
-    return () => clearInterval(interval);
+    const subscription = supabase.channel('all_orders_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_orders' }, fetchOrders)
+      .subscribe();
+    return () => { supabase.removeChannel(subscription); };
   }, []);
 
   return (
@@ -91,26 +94,26 @@ export default function AllOrders() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {ORDERS.map((order) => (
+              {orders.map((order) => (
                 <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
                   <td className="px-8 py-6">
                     <span className="text-sm font-black text-slate-900">{order.id}</span>
                   </td>
                   <td className="px-8 py-6">
                     <div className="flex flex-col">
-                       <span className="text-sm font-black text-slate-700 leading-none">{order.customer}</span>
-                       <span className="text-[10px] text-indigo-500 font-bold mt-1.5 uppercase tracking-widest">{order.table}</span>
+                       <span className="text-sm font-black text-slate-700 leading-none">Customer</span>
+                       <span className="text-[10px] text-indigo-500 font-bold mt-1.5 uppercase tracking-widest">{order.table_no}</span>
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    <span className="text-[11px] font-bold text-slate-500">{order.date}</span>
+                    <span className="text-[11px] font-bold text-slate-500">{new Date(order.created_at).toLocaleString()}</span>
                   </td>
                   <td className="px-8 py-6">
                     <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border border-indigo-100">
-                      {order.type}
+                      Dine-in
                     </span>
                   </td>
-                  <td className="px-8 py-6 text-sm font-black text-slate-900">₹{order.items?.reduce((sum: number, i: any) => sum + (i.qty * (i.price || 0)), 0)}</td>
+                  <td className="px-8 py-6 text-sm font-black text-slate-900">₹{order.total_amount || 0}</td>
                   <td className="px-8 py-6">
                     <span className={cn(
                       "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border",
