@@ -108,7 +108,7 @@ export default function BillingPage() {
                  <thead>
                     <tr className="bg-slate-50/50">
                        <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">ID / Table</th>
-                       <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer</th>
+                       <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Items</th>
                        <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Method</th>
                        <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
                        <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
@@ -130,7 +130,15 @@ export default function BillingPage() {
                                <span className="text-[10px] text-indigo-500 font-bold mt-1.5 uppercase tracking-widest">Table {inv.table_no}</span>
                             </div>
                          </td>
-                         <td className="px-8 py-5 text-sm font-bold text-slate-700">Customer</td>
+                         <td className="px-8 py-5">
+                            <div className="flex flex-col gap-1 max-w-[200px]">
+                              {Array.isArray(inv.items) ? inv.items.map((item: any, idx: number) => (
+                                <span key={idx} className="text-[10px] font-bold text-slate-500 truncate">
+                                  {item.qty}x {item.name}
+                                </span>
+                              )) : <span className="text-[10px] text-slate-400">No items</span>}
+                            </div>
+                         </td>
                          <td className="px-8 py-5">
                             <div className="flex items-center gap-2 text-slate-500">
                                <Banknote className="w-3.5 h-3.5" />
@@ -175,31 +183,25 @@ export default function BillingPage() {
               </div>
 
               <div className="space-y-4 mb-8">
-                 <div className="bg-white/5 rounded-2xl p-4 border border-white/5 hover:bg-white/10 transition-all cursor-pointer group/item">
+                 {Array.from(new Set(invoices.filter(i => i.status !== 'completed' && i.status !== 'cancelled').map(i => i.table_no))).map((tableNo) => (
+                  <Link to={`/counter?table=${tableNo}`} key={tableNo} className="block bg-white/5 rounded-2xl p-4 border border-white/5 hover:bg-white/10 transition-all cursor-pointer group/item">
                     <div className="flex items-center justify-between">
                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-indigo-600/50 flex items-center justify-center font-black">04</div>
+                          <div className="w-10 h-10 rounded-xl bg-indigo-600/50 flex items-center justify-center font-black">{tableNo.replace('T', '')}</div>
                           <div>
-                             <p className="text-sm font-black">Table 04</p>
+                             <p className="text-sm font-black">Table {tableNo}</p>
                              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Active Bill</p>
                           </div>
                        </div>
                        <ChevronRight className="w-5 h-5 text-slate-500 group-hover/item:translate-x-1 transition-transform" />
                     </div>
-                 </div>
-                 {/* Dummy placeholders for other active tables */}
-                 <div className="bg-white/5 rounded-2xl p-4 border border-white/5 hover:bg-white/10 transition-all cursor-pointer opacity-60">
-                    <div className="flex items-center justify-between">
-                       <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-orange-600/50 flex items-center justify-center font-black">09</div>
-                          <div>
-                             <p className="text-sm font-black">Table 09</p>
-                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Active Bill</p>
-                          </div>
-                       </div>
-                       <ChevronRight className="w-5 h-5 text-slate-500" />
-                    </div>
-                 </div>
+                  </Link>
+                 ))}
+                 {invoices.filter(i => i.status !== 'completed' && i.status !== 'cancelled').length === 0 && (
+                   <div className="text-center py-6">
+                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">No Active Bills</p>
+                   </div>
+                 )}
               </div>
 
               <div className="space-y-4">
