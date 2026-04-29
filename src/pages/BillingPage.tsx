@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { 
   Receipt, 
   Search, 
@@ -14,10 +15,23 @@ import {
 import { cn } from '../lib/utils';
 import { Link } from 'react-router-dom';
 
-const invoices: any[] = [];
-
 export default function BillingPage() {
   const [activeTab, setActiveTab] = useState('All Bills');
+  const [invoices, setInvoices] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      const { data, error } = await supabase.from('app_orders').select('*').order('created_at', { ascending: false });
+      if (data && !error) {
+        setInvoices(data);
+      }
+    };
+    fetchInvoices();
+    const subscription = supabase.channel('billing_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_orders' }, fetchInvoices)
+      .subscribe();
+    return () => { supabase.removeChannel(subscription); };
+  }, []);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -111,28 +125,26 @@ export default function BillingPage() {
                          <td className="px-8 py-5">
                             <div className="flex flex-col">
                                <span className="text-xs font-black text-slate-900 leading-none">{inv.id}</span>
-                               <span className="text-[10px] text-indigo-500 font-bold mt-1.5 uppercase tracking-widest">Table {inv.table}</span>
+                               <span className="text-[10px] text-indigo-500 font-bold mt-1.5 uppercase tracking-widest">Table {inv.table_no}</span>
                             </div>
                          </td>
-                         <td className="px-8 py-5 text-sm font-bold text-slate-700">{inv.customer}</td>
+                         <td className="px-8 py-5 text-sm font-bold text-slate-700">Customer</td>
                          <td className="px-8 py-5">
                             <div className="flex items-center gap-2 text-slate-500">
-                               {inv.method === 'UPI' && <Smartphone className="w-3.5 h-3.5" />}
-                               {inv.method === 'Card' && <CreditCard className="w-3.5 h-3.5" />}
-                               {inv.method === 'Cash' && <Banknote className="w-3.5 h-3.5" />}
-                               <span className="text-[10px] font-black uppercase tracking-wider">{inv.method}</span>
+                               <Banknote className="w-3.5 h-3.5" />
+                               <span className="text-[10px] font-black uppercase tracking-wider">Cash</span>
                             </div>
                          </td>
-                         <td className="px-8 py-5 text-sm font-black text-slate-900">₹ {inv.amount}</td>
+                         <td className="px-8 py-5 text-sm font-black text-slate-900">₹ {inv.total_amount || 0}</td>
                          <td className="px-8 py-5">
                             <span className={cn(
                               "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest",
-                              inv.status === 'Paid' ? "bg-emerald-50 text-emerald-600" : "bg-orange-50 text-orange-600"
+                              inv.status === 'completed' ? "bg-emerald-50 text-emerald-600" : "bg-orange-50 text-orange-600"
                             )}>
                               {inv.status}
                             </span>
                          </td>
-                         <td className="px-8 py-5 text-[10px] font-bold text-slate-400">{inv.date}</td>
+                         <td className="px-8 py-5 text-[10px] font-bold text-slate-400">{new Date(inv.created_at).toLocaleString()}</td>
                          <td className="px-8 py-5 text-right">
                             <button className="p-2 text-slate-300 hover:text-slate-600 rounded-lg hover:bg-white transition-all opacity-0 group-hover:opacity-100">
                                <MoreVertical className="w-5 h-5" />
