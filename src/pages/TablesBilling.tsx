@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { 
   Calculator, 
   History, 
@@ -8,20 +9,33 @@ import {
 import { cn } from '../lib/utils';
 import { Link } from 'react-router-dom';
 
-const INITIAL_TABLES: any[] = [];
-
 export default function TablesBilling() {
-  const [tables, setTables] = useState<any[]>(INITIAL_TABLES);
+  const [tables, setTables] = useState<any[]>([]);
 
-  const handleRegisterTable = () => {
-    const newId = 'T' + (tables.length + 1).toString().padStart(2, '0');
-    setTables([...tables, {
-      id: newId,
-      status: 'Available',
-      items: 0,
-      bill: '-',
-      time: '-'
-    }]);
+  useEffect(() => {
+    const fetchTables = async () => {
+      const { data, error } = await supabase.from('app_tables').select('*').order('number', { ascending: true });
+      if (data && !error) {
+        setTables(data);
+      } else {
+        setTables([]);
+      }
+    };
+    fetchTables();
+    const subscription = supabase.channel('tablesbilling_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_tables' }, fetchTables)
+      .subscribe();
+    return () => { supabase.removeChannel(subscription); };
+  }, []);
+
+  const handleRegisterTable = async () => {
+    const newNumber = 'T' + (tables.length + 1).toString().padStart(2, '0');
+    await supabase.from('app_tables').insert({
+      number: newNumber,
+      capacity: 4,
+      status: 'free',
+      location: 'Main Hall'
+    });
   };
 
   return (
@@ -49,12 +63,12 @@ export default function TablesBilling() {
              <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
                    <div className="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-xl font-black shadow-lg">
-                      {table.id}
+                      {table.number}
                    </div>
                    <div className={cn(
                      "px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest",
-                     table.status === 'Available' ? "bg-emerald-50 text-emerald-600" : 
-                     table.status === 'In Use' ? "bg-orange-50 text-orange-600" : "bg-indigo-50 text-indigo-600"
+                     table.status === 'free' ? "bg-emerald-50 text-emerald-600" : 
+                     table.status === 'occupied' ? "bg-orange-50 text-orange-600" : "bg-indigo-50 text-indigo-600"
                    )}>
                       {table.status}
                    </div>
@@ -68,31 +82,33 @@ export default function TablesBilling() {
                 <div className="grid grid-cols-2 gap-4">
                    <div className="bg-slate-50 rounded-2xl p-4 text-center border border-slate-100">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">Total Items</p>
-                      <p className="text-lg font-black text-slate-800">{table.items || '0'}</p>
+                      <p className="text-lg font-black text-slate-800">{table.capacity || '0'}</p>
                    </div>
                    <div className="bg-slate-50 rounded-2xl p-4 text-center border border-slate-100">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">Duration</p>
-                      <p className="text-lg font-black text-slate-800">{table.time || '0m'}</p>
+                      <p className="text-lg font-black text-slate-800">{table.occupied_since || '0m'}</p>
                    </div>
                 </div>
 
                 <div className="flex items-center justify-between px-2">
                    <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Active Bill</span>
-                   <span className="text-2xl font-black text-slate-900">{table.bill}</span>
+                   <span className="text-2xl font-black text-slate-900">{table.bill_amount}</span>
                 </div>
 
                 <div className="pt-4 space-y-3">
-                   <button className={cn(
+                   <Link 
+                      to={`/counter?table=${table.number}`}
+                      className={cn(
                      "w-full py-4 rounded-[1.25rem] font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3",
-                     table.status === 'Available' ? "bg-indigo-50 text-indigo-400 cursor-not-allowed" : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-xl shadow-indigo-100"
+                     table.status === 'free' ? "bg-indigo-50 text-indigo-400" : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-xl shadow-indigo-100"
                    )}>
                       <Calculator className="w-4 h-4" />
                       QUICK BILL
-                   </button>
-                   <button className="w-full py-4 bg-white border border-slate-200 text-slate-600 rounded-[1.25rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-slate-50 transition-all flex items-center justify-center gap-3">
+                   </Link>
+                   <Link to={`/customer/table/${table.number}`} className="w-full py-4 bg-white border border-slate-200 text-slate-600 rounded-[1.25rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-slate-50 transition-all flex items-center justify-center gap-3">
                       <Plus className="w-4 h-4" />
                       ADD ORDER
-                   </button>
+                   </Link>
                 </div>
              </div>
           </div>

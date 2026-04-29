@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { 
   Search, 
   User, 
@@ -21,17 +22,30 @@ import {
 import { cn } from '../lib/utils';
 import { Link } from 'react-router-dom';
 
-const INITIAL_TABLES: any[] = [];
-
-const MENU_ITEMS: any[] = [];
-
 export default function CounterPanel() {
   const [activeView, setActiveView] = useState<'table' | 'order'>('table');
-  const [selectedTableId, setSelectedTableId] = useState('T05');
-  const [tables, setTables] = useState(INITIAL_TABLES);
+  const [selectedTableId, setSelectedTableId] = useState('T01');
+  const [tables, setTables] = useState<any[]>([]);
+  const [menuItems, setMenuItems] = useState<any[]>([]);
   const [bills, setBills] = useState<Record<string, any>>({});
   const [showAddItem, setShowAddItem] = useState(false);
   const [searchMenu, setSearchMenu] = useState('');
+
+  useEffect(() => {
+    const fetchAll = async () => {
+      const [tablesRes, menuRes] = await Promise.all([
+        supabase.from('app_tables').select('*').order('number', { ascending: true }),
+        supabase.from('app_menu').select('*')
+      ]);
+      
+      if (tablesRes.data && tablesRes.data.length > 0) {
+        setTables(tablesRes.data);
+        if (!selectedTableId) setSelectedTableId(tablesRes.data[0].number);
+      }
+      if (menuRes.data) setMenuItems(menuRes.data);
+    };
+    fetchAll();
+  }, []);
 
   const currentBillItems = bills[selectedTableId] || [];
   const subTotal = currentBillItems.reduce((acc: number, item: any) => acc + (item.price * item.qty), 0);
@@ -155,19 +169,19 @@ export default function CounterPanel() {
                     {tables.map((table) => (
                       <div 
                         key={table.id}
-                        onClick={() => setSelectedTableId(table.id)}
+                        onClick={() => setSelectedTableId(table.number)}
                         className={cn(
                           "p-4 rounded-xl border flex flex-col items-center justify-center gap-1 cursor-pointer transition-all hover:scale-105 active:scale-95",
-                          selectedTableId === table.id && "ring-2 ring-indigo-600 ring-offset-2",
-                          table.status === 'available' && "bg-emerald-50 border-emerald-100 text-emerald-700",
+                          selectedTableId === table.number && "ring-2 ring-indigo-600 ring-offset-2",
+                          table.status === 'free' && "bg-emerald-50 border-emerald-100 text-emerald-700",
                           table.status === 'occupied' && "bg-orange-50 border-orange-100 text-orange-700",
                           table.status === 'in-use' && "bg-blue-50 border-blue-100 text-blue-700",
                           table.status === 'reserved' && "bg-slate-50 border-slate-200 text-slate-400"
                         )}
                       >
-                        <span className="text-sm font-black">{table.id}</span>
-                        <span className="text-[10px] font-bold opacity-70">{table.status === 'reserved' ? 'Reserved' : `${table.seats} Seats`}</span>
-                        {table.price > 0 && <span className="text-[10px] font-black mt-1">₹ {table.price}</span>}
+                        <span className="text-sm font-black">{table.number}</span>
+                        <span className="text-[10px] font-bold opacity-70">{table.status === 'reserved' ? 'Reserved' : `${table.capacity} Seats`}</span>
+                        {table.bill_amount && table.bill_amount !== '-' && <span className="text-[10px] font-black mt-1">{table.bill_amount}</span>}
                       </div>
                     ))}
                   </div>
@@ -176,7 +190,7 @@ export default function CounterPanel() {
                 <div className="space-y-4">
                   <h3 className="text-sm font-bold text-slate-800 mb-4">Quick Menu</h3>
                   <div className="grid grid-cols-2 gap-3">
-                     {MENU_ITEMS.map((item, i) => (
+                     {menuItems.slice(0, 10).map((item, i) => (
                         <div 
                            key={i} 
                            onClick={() => handleAddItem(item)}
@@ -196,7 +210,7 @@ export default function CounterPanel() {
               { label: 'Total Tables', value: tables.length },
               { label: 'Occupied', value: tables.filter(t => t.status === 'occupied').length },
               { label: 'In Use', value: tables.filter(t => t.status === 'in-use').length },
-              { label: 'Available', value: tables.filter(t => t.status === 'available').length },
+              { label: 'Available', value: tables.filter(t => t.status === 'free').length },
               { label: 'Reserved', value: tables.filter(t => t.status === 'reserved').length },
             ].map((stat, i) => (
               <div key={i} className="text-center">
@@ -387,7 +401,7 @@ export default function CounterPanel() {
                
                <div className="p-8">
                   <div className="grid grid-cols-2 gap-4">
-                     {MENU_ITEMS.map((item, i) => (
+                     {menuItems.map((item, i) => (
                         <div 
                            key={i} 
                            onClick={() => {
