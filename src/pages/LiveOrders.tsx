@@ -14,8 +14,6 @@ import {
 import { cn } from '../lib/utils';
 import { Link } from 'react-router-dom';
 
-const liveOrders: any[] = [];
-
 const statusStyles: any = {
   'New': 'bg-emerald-50 text-emerald-600 border-emerald-100',
   'In Kitchen': 'bg-orange-50 text-orange-600 border-orange-100',
