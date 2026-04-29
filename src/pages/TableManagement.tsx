@@ -15,13 +15,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
-const INITIAL_TABLES = [
-  { id: '1', number: 'T01', capacity: 4, status: 'free', location: 'Main Hall', type: '-', billAmount: '-', occupiedSince: '-' },
-  { id: '2', number: 'T02', capacity: 2, status: 'occupied', location: 'Main Hall', type: 'Dine-in', billAmount: '₹ 0', occupiedSince: 'Just Now' },
-  { id: '3', number: 'T03', capacity: 6, status: 'reserved', location: 'Patio', type: '-', billAmount: '-', occupiedSince: '-' },
-  { id: '4', number: 'T04', capacity: 4, status: 'free', location: 'Main Hall', type: '-', billAmount: '-', occupiedSince: '-' },
-  { id: '5', number: 'T05', capacity: 8, status: 'cleaning', location: 'Private Room', type: '-', billAmount: '-', occupiedSince: '-' },
-];
+const INITIAL_TABLES: any[] = [];
 
 export default function TableManagement() {
   const [filter, setFilter] = useState('All');
@@ -33,7 +27,7 @@ export default function TableManagement() {
       if (data && data.length > 0 && !error) {
         setTables(data);
       } else {
-        setTables(INITIAL_TABLES);
+        setTables([]);
       }
     };
     fetchTables();

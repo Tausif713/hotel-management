@@ -13,19 +13,14 @@ import {
   Clock,
   ChevronLeft
 } from 'lucide-react';
-const INITIAL_MENU: any[] = [
-  { id: '1', name: 'Butter Naan', category: 'Breads', price: 45, rating: 4.8, spicy: 0, isVeg: true, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=300&q=80', description: 'Soft and buttery Indian flatbread' },
-  { id: '2', name: 'Paneer Tikka', category: 'Starters', price: 240, rating: 4.9, spicy: 2, isVeg: true, image: 'https://images.unsplash.com/photo-1599487405270-86430f8e589b?auto=format&fit=crop&w=300&q=80', description: 'Grilled cottage cheese with spices' },
-  { id: '3', name: 'Chicken Biryani', category: 'Main Course', price: 320, rating: 4.7, spicy: 3, isVeg: false, image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=300&q=80', description: 'Aromatic basmati rice cooked with tender chicken' },
-  { id: '4', name: 'Veg Pasta', category: 'Main Course', price: 180, rating: 4.5, spicy: 1, isVeg: true, image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=300&q=80', description: 'Penne pasta in mixed sauce with veggies' },
-];
+const INITIAL_MENU: any[] = [];
 
 export default function CustomerMenu() {
   const { id } = useParams();
   const [cart, setCart] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState('All Items');
   const [searchTerm, setSearchTerm] = useState('');
-  const [menuItems, setMenuItems] = useState<any[]>(INITIAL_MENU);
+  const [menuItems, setMenuItems] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -43,7 +38,7 @@ export default function CustomerMenu() {
           description: item.description
         })));
       } else {
-        setMenuItems(INITIAL_MENU);
+        setMenuItems([]);
       }
     };
     fetchMenu();
