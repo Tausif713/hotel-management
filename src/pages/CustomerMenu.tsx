@@ -10,7 +10,6 @@ import {
   Search,
   Star,
   Info,
-  Clock,
   ChevronLeft
 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -161,22 +160,14 @@ export default function CustomerMenu() {
       </div>
 
       {/* Menu List */}
-      <div className="flex-1 overflow-y-auto px-6 space-y-6 pb-40 pt-2 z-10 scrollbar-hide">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest">Recommended</h2>
-          <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            <Clock className="w-3 h-3" />
-            20-30 MIN
-          </div>
-        </div>
-
+      <div className="flex-1 overflow-y-auto px-6 pb-32 pt-2 z-10 scrollbar-hide grid grid-cols-3 gap-3">
         {filteredMenu.map((item) => (
           <div 
             key={item.id} 
-            className="bg-white p-4 rounded-[2rem] flex gap-5 border border-slate-100 shadow-sm relative overflow-hidden group active:scale-[0.98] transition-transform"
+            className="bg-white rounded-[2rem] p-3 flex flex-col gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-50 active:scale-[0.98] transition-transform"
           >
-            <div className="w-28 h-28 rounded-2xl overflow-hidden flex-shrink-0 relative">
-              <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+            <div className="w-full h-32 rounded-2xl overflow-hidden relative shadow-inner">
+              <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
               <div className="absolute top-2 left-2">
                 {item.isVeg ? (
                   <div className="w-4 h-4 bg-white/90 backdrop-blur border border-emerald-500 p-[2px] rounded-sm">

@@ -17,7 +17,8 @@ import {
   Smartphone, 
   FileText,
   Pause,
-  X
+  X,
+  Flame
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -109,6 +110,26 @@ export default function CounterPanel() {
     alert(`Bill Generated for ${selectedTableId}! Total: ₹${total}`);
     setBills({ ...bills, [selectedTableId]: [] });
     await supabase.from('app_tables').update({ status: 'free', bill_amount: '-', occupied_since: '-' }).eq('number', selectedTableId);
+  };
+
+  const handleSendKOT = async () => {
+    if (currentBillItems.length === 0) return;
+    
+    const itemsData = currentBillItems.map((item: any) => ({ name: item.name, qty: item.qty, note: '', price: item.price }));
+    
+    const { error } = await supabase.from('app_orders').insert({
+        table_no: selectedTableId,
+        status: 'pending',
+        priority: 'normal',
+        items: itemsData,
+        total_amount: subTotal
+    });
+    
+    if (!error) {
+      alert('KOT Sent to Kitchen!');
+    } else {
+      alert('Failed to send KOT: ' + error.message);
+    }
   };
 
   return (
@@ -391,20 +412,21 @@ export default function CounterPanel() {
                   disabled={currentBillItems.length === 0}
                   className={cn(
                      "w-full py-4 rounded-[1.25rem] font-black text-sm uppercase tracking-[0.2em] transition-all shadow-xl flex items-center justify-center gap-3",
-                     currentBillItems.length > 0 ? "bg-[#4f46e5] hover:bg-[#4338ca] text-white shadow-indigo-100" : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                     currentBillItems.length > 0 ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-100" : "bg-slate-200 text-slate-400 cursor-not-allowed"
                   )}
                >
-                  <FileText className="w-5 h-5 opacity-50" />
-                  Generate Bill
+                  <Printer className="w-5 h-5" />
+                  GENERATE BILL
                </button>
-               <div className="grid grid-cols-2 gap-3">
-                  <button className="py-3 border-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all">
-                    <Printer className="w-4 h-4" />
-                    Print Bill
+
+               <div className="grid grid-cols-2 gap-3 mt-4">
+                  <button onClick={handleSendKOT} className="py-3 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-xl font-bold text-xs hover:bg-indigo-100 transition-all flex items-center justify-center gap-2">
+                    <Flame className="w-4 h-4" />
+                    SEND KOT
                   </button>
-                  <button className="py-3 border-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all">
+                  <button className="py-3 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-100 transition-all flex items-center justify-center gap-2">
                     <Share2 className="w-4 h-4" />
-                    WhatsApp
+                    SHARE BILL
                   </button>
                </div>
             </div>

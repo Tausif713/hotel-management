@@ -4,7 +4,8 @@ import {
   Download, 
   Printer, 
   ExternalLink,
-  Plus
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -47,6 +48,24 @@ export default function QRCodePage() {
     setNewTableNo('');
   };
 
+  const handleDeleteQR = async () => {
+    if (!selectedTable) return;
+    const confirmDelete = window.confirm(`Are you sure you want to delete QR code for Table ${selectedTable}?`);
+    if (!confirmDelete) return;
+
+    await supabase.from('app_tables').delete().eq('number', selectedTable);
+    
+    // Fetch remaining
+    const { data } = await supabase.from('app_tables').select('*').order('number', { ascending: true });
+    if (data && data.length > 0) {
+      setTables(data);
+      setSelectedTable(data[0].number);
+    } else {
+      setTables([]);
+      setSelectedTable('');
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="flex items-center justify-between">
@@ -78,8 +97,19 @@ export default function QRCodePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main QR Designer */}
         <div className="lg:col-span-2 space-y-6">
-           <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center">
-              <h3 className="text-lg font-black text-slate-900 mb-8 self-start">QR Code Designer</h3>
+           <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center relative">
+              <div className="w-full flex items-center justify-between mb-8">
+                 <h3 className="text-lg font-black text-slate-900">QR Code Designer</h3>
+                 {selectedTable && (
+                   <button 
+                     onClick={handleDeleteQR}
+                     className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors flex items-center gap-2 text-xs font-bold"
+                   >
+                     <Trash2 className="w-4 h-4" />
+                     Delete QR
+                   </button>
+                 )}
+              </div>
               
               <div className="relative group cursor-pointer">
                 <div className="absolute inset-0 bg-indigo-500/10 blur-3xl rounded-full group-hover:bg-indigo-500/20 transition-all duration-500" />
