@@ -88,7 +88,7 @@ export default function KitchenPanel() {
 
                      <div className="p-6 space-y-4">
                         <div className="space-y-3">
-                           {order.items.map((item, i) => (
+                           {order.items.map((item: any, i: number) => (
                              <div key={i} className="flex justify-between items-start">
                                 <div className="flex items-start gap-3">
                                    <div className="w-6 h-6 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center text-[10px] font-black flex-shrink-0">
