@@ -387,7 +387,7 @@ export default function CounterPanel() {
         </div>
 
         {/* Right Col: Billing - POS Style Receipt */}
-        <div className="flex-[1.5] flex flex-col bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-2xl relative">
+        <div className="flex-[1.2] flex flex-col bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-2xl relative">
           <div className="p-6 border-b border-dashed border-slate-200">
             <div className="flex items-center justify-between">
               <div>
