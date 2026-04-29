@@ -455,7 +455,7 @@ export default function CounterPanel() {
                     <Flame className="w-4 h-4" />
                     SEND KOT
                   </button>
-                  <button className="py-3 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-100 transition-all flex items-center justify-center gap-2">
+                  <button onClick={() => alert('Opening WhatsApp to share bill...')} className="py-3 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-100 transition-all flex items-center justify-center gap-2">
                     <Share2 className="w-4 h-4" />
                     SHARE BILL
                   </button>

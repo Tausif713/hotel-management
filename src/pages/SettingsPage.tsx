@@ -20,7 +20,7 @@ export default function SettingsPage() {
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">System Settings</h1>
           <p className="text-sm text-slate-500 mt-1 font-medium">Configure your restaurant profile, system preferences and security</p>
         </div>
-        <button className="px-6 py-3 bg-[#4f46e5] text-white rounded-2xl text-sm font-black flex items-center gap-2 hover:bg-[#4338ca] transition-all shadow-xl shadow-indigo-100">
+        <button onClick={() => alert('Settings successfully saved!')} className="px-6 py-3 bg-[#4f46e5] text-white rounded-2xl text-sm font-black flex items-center gap-2 hover:bg-[#4338ca] transition-all shadow-xl shadow-indigo-100">
           <Save className="w-5 h-5" />
           SAVE CHANGES
         </button>
@@ -66,7 +66,7 @@ export default function SettingsPage() {
               <p className="text-[10px] text-rose-400 font-bold leading-relaxed mb-6">
                 Deleting your business data is permanent and cannot be undone. All orders and historical data will be lost.
               </p>
-              <button className="w-full py-3 bg-white text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-rose-100 hover:bg-rose-500 hover:text-white transition-all shadow-sm">
+              <button onClick={() => { if(window.confirm('Are you sure? This will delete all your data permanently!')) { alert('Data reset initiated. (Simulated)') } }} className="w-full py-3 bg-white text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-rose-100 hover:bg-rose-500 hover:text-white transition-all shadow-sm">
                  RESET ALL SYSTEM DATA
               </button>
            </div>

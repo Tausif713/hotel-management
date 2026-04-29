@@ -23,7 +23,15 @@ import { supabase } from '../lib/supabase';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-const chartData: any[] = [];
+const chartData = [
+  { name: 'Mon', sales: 4000 },
+  { name: 'Tue', sales: 3000 },
+  { name: 'Wed', sales: 2000 },
+  { name: 'Thu', sales: 2780 },
+  { name: 'Fri', sales: 1890 },
+  { name: 'Sat', sales: 2390 },
+  { name: 'Sun', sales: 3490 },
+];
 
 const StatCard = ({ label, value, trend, trendColor, icon: Icon, colorClass, subtext }: any) => (
   <div className="bg-white p-6 rounded-[1.5rem] border border-slate-100 shadow-sm flex items-center justify-between group hover:shadow-md transition-all duration-300">
@@ -53,8 +61,19 @@ const StatCard = ({ label, value, trend, trendColor, icon: Icon, colorClass, sub
   </div>
 );
 
-const topSellingItems: any[] = [];
-const tableStats: any[] = [];
+const topSellingItems = [
+  { rank: 1, name: 'Butter Chicken', orders: '124 orders', image: 'https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=400&q=80' },
+  { rank: 2, name: 'Paneer Tikka', orders: '98 orders', image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&q=80' },
+  { rank: 3, name: 'Garlic Naan', orders: '84 orders', image: 'https://images.unsplash.com/photo-1626074353765-517a681e40be?w=400&q=80' },
+];
+
+const tableStats = [
+  { id: 1, status: 'Occupied', number: 'T01', seats: 4 },
+  { id: 2, status: 'In Use', number: 'T02', seats: 2 },
+  { id: 3, status: 'Free', number: 'T03', seats: 6 },
+  { id: 4, status: 'Occupied', number: 'T04', seats: 4 },
+];
+
 const staffOverview: any[] = [];
 
 export default function Dashboard() {

@@ -19,9 +19,22 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
-const weeklySalesData: any[] = [];
+const weeklySalesData = [
+  { name: 'Mon', sales: 4000, orders: 24 },
+  { name: 'Tue', sales: 3000, orders: 18 },
+  { name: 'Wed', sales: 2000, orders: 12 },
+  { name: 'Thu', sales: 2780, orders: 19 },
+  { name: 'Fri', sales: 1890, orders: 15 },
+  { name: 'Sat', sales: 2390, orders: 22 },
+  { name: 'Sun', sales: 3490, orders: 28 },
+];
 
-const categorySales: any[] = [];
+const categorySales = [
+  { name: 'Starters', value: 400, color: '#4f46e5' },
+  { name: 'Main Course', value: 300, color: '#0ea5e9' },
+  { name: 'Desserts', value: 300, color: '#10b981' },
+  { name: 'Beverages', value: 200, color: '#f59e0b' },
+];
 
 export default function ReportsPage() {
   return (
@@ -36,7 +49,7 @@ export default function ReportsPage() {
               <Calendar className="w-5 h-5 text-indigo-500" />
               12 May - 19 May 2024
            </div>
-           <button className="px-6 py-3 bg-slate-900 text-white rounded-2xl text-sm font-black flex items-center gap-2 hover:bg-slate-800 transition-all shadow-xl shadow-slate-200">
+           <button onClick={() => alert('Downloading PDF Report...')} className="px-6 py-3 bg-slate-900 text-white rounded-2xl text-sm font-black flex items-center gap-2 hover:bg-slate-800 transition-all shadow-xl shadow-slate-200">
             <Download className="w-5 h-5" />
             EXPORT PDF
           </button>

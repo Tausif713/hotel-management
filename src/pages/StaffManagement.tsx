@@ -56,6 +56,15 @@ export default function StaffManagement() {
     await supabase.from('app_staff').update({ status: newStatus }).eq('id', id);
   };
 
+  const handleEditStaff = async (member: any) => {
+    const newName = window.prompt("Enter new name for the staff member:", member.name);
+    if (!newName) return;
+    const newRole = window.prompt("Enter new role (e.g., Waiter, Cashier, Chef):", member.role);
+    if (!newRole) return;
+    
+    await supabase.from('app_staff').update({ name: newName, role: newRole }).eq('id', member.id);
+  };
+
   const filteredStaff = staff.filter(s => s.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
@@ -125,7 +134,7 @@ export default function StaffManagement() {
                    >
                       {member.status === 'Active' ? 'Deactivate' : 'Activate'}
                    </button>
-                   <button className="py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-1">
+                   <button onClick={() => handleEditStaff(member)} className="py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-1">
                       <Edit2 className="w-3.5 h-3.5" />
                       Edit
                    </button>
