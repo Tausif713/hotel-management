@@ -199,11 +199,11 @@ export default function QRCodePage() {
                       <div className="flex items-center justify-between mb-4">
                          <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black text-slate-600 group-hover:text-indigo-600 transition-colors">
-                               {table.id}
+                               {table.number}
                             </div>
-                            <div>
-                               <p className="text-sm font-black text-slate-900 leading-none">Table {table.id}</p>
-                               <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">{table.seats} Seats</p>
+                            <div className="w-[120px]">
+                               <p className="text-sm font-black text-slate-900 leading-none truncate" title={`Table ${table.number}`}>Table {table.number}</p>
+                               <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-widest">{table.capacity} Seats</p>
                             </div>
                          </div>
                          <div className={cn(
