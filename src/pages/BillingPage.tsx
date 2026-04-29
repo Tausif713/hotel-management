@@ -14,7 +14,6 @@ import { cn } from '../lib/utils';
 import { Link } from 'react-router-dom';
 
 export default function BillingPage() {
-  const [activeTab, setActiveTab] = useState('All Bills');
   const [invoices, setInvoices] = useState<any[]>([]);
 
   useEffect(() => {
@@ -74,19 +73,8 @@ export default function BillingPage() {
         <div className="col-span-12 lg:col-span-8 space-y-6">
            <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
              <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-                <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl">
-                  {['All Bills', 'Paid', 'Pending'].map((t) => (
-                    <button 
-                      key={t}
-                      onClick={() => setActiveTab(t)}
-                      className={cn(
-                        "px-6 py-2.5 rounded-xl text-xs font-black transition-all",
-                        activeTab === t ? "bg-white text-indigo-600 shadow-md" : "text-slate-400 hover:text-slate-600"
-                      )}
-                    >
-                      {t}
-                    </button>
-                  ))}
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-black text-slate-800">Completed Invoices</h2>
                 </div>
                 <div className="flex items-center gap-3">
                    <div className="relative group">
@@ -117,16 +105,11 @@ export default function BillingPage() {
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-50">
-                    {invoices.filter(inv => {
-                      if (activeTab === 'All Bills') return true;
-                      if (activeTab === 'Paid') return inv.status === 'completed';
-                      if (activeTab === 'Pending') return inv.status !== 'completed';
-                      return true;
-                    }).map((inv) => (
+                    {invoices.filter(inv => inv.status === 'completed').map((inv) => (
                       <tr key={inv.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
                          <td className="px-8 py-5">
                             <div className="flex flex-col">
-                               <span className="text-xs font-black text-slate-900 leading-none">{inv.id}</span>
+                               <span className="text-xs font-black text-slate-900 leading-none">INV-{inv.id.split('-')[0].toUpperCase()}</span>
                                <span className="text-[10px] text-indigo-500 font-bold mt-1.5 uppercase tracking-widest">Table {inv.table_no}</span>
                             </div>
                          </td>
