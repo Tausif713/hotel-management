@@ -56,11 +56,11 @@ export default function CounterPanel() {
           if (!activeBills[order.table_no]) activeBills[order.table_no] = [];
           if (Array.isArray(order.items)) {
              order.items.forEach((item: any) => {
-               const existing = activeBills[order.table_no].find(i => i.name === item.name);
+               const existing = activeBills[order.table_no].find(i => i.name === item.name && !i.isNew);
                if (existing) {
                  existing.qty += item.qty;
                } else {
-                 activeBills[order.table_no].push({ ...item, id: Math.random().toString() });
+                 activeBills[order.table_no].push({ ...item, id: Math.random().toString(), isNew: false });
                }
              });
           }
@@ -94,9 +94,13 @@ export default function CounterPanel() {
     }
   }, [total, selectedTableId]);
 
-  const handleUpdateQty = (itemName: string, delta: number) => {
+  const handleUpdateQty = (itemName: string, delta: number, isNew: boolean) => {
+    if (!isNew) {
+      alert("Cannot change quantity of already sent items. Please add a new item instead.");
+      return;
+    }
     const updatedItems = currentBillItems.map((item: any) => {
-      if (item.name === itemName) {
+      if (item.name === itemName && item.isNew) {
         return { ...item, qty: Math.max(1, item.qty + delta) };
       }
       return item;
@@ -104,23 +108,27 @@ export default function CounterPanel() {
     setBills({ ...bills, [selectedTableId]: updatedItems });
   };
 
-  const handleRemoveItem = (itemName: string) => {
-    const updatedItems = currentBillItems.filter((item: any) => item.name !== itemName);
+  const handleRemoveItem = (itemName: string, isNew: boolean) => {
+    if (!isNew) {
+      alert("Cannot remove already sent items. Please manage from Kitchen Panel.");
+      return;
+    }
+    const updatedItems = currentBillItems.filter((item: any) => !(item.name === itemName && item.isNew));
     setBills({ ...bills, [selectedTableId]: updatedItems });
   };
 
   const handleAddItem = async (menuItem: any) => {
-    const existingItem = currentBillItems.find((item: any) => item.name === menuItem.name);
+    const existingItem = currentBillItems.find((item: any) => item.name === menuItem.name && item.isNew);
     let updatedItems;
     if (existingItem) {
       updatedItems = currentBillItems.map((item: any) => {
-        if (item.name === menuItem.name) {
+        if (item.name === menuItem.name && item.isNew) {
           return { ...item, qty: Math.max(1, item.qty + 1) };
         }
         return item;
       });
     } else {
-      updatedItems = [...currentBillItems, { ...menuItem, qty: 1 }];
+      updatedItems = [...currentBillItems, { ...menuItem, qty: 1, isNew: true }];
     }
     setBills({ ...bills, [selectedTableId]: updatedItems });
     
@@ -377,20 +385,21 @@ export default function CounterPanel() {
               <tbody className="divide-y divide-slate-50">
                 {currentBillItems.map((item: any, i: number) => (
                   <tr key={i} className="group">
-                    <td className="py-4">
+                    <td className="py-4 flex items-center gap-2">
                       <p className="text-xs font-bold text-slate-800 leading-tight">{item.name}</p>
+                      {item.isNew && <span className="text-[8px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded font-black uppercase">NEW</span>}
                     </td>
                     <td className="py-4">
                       <div className="flex items-center justify-center gap-2 bg-slate-50 border border-slate-200 p-1 rounded-lg scale-90">
                         <button 
-                           onClick={() => handleUpdateQty(item.name, -1)}
+                           onClick={() => handleUpdateQty(item.name, -1, item.isNew)}
                            className="w-6 h-6 flex items-center justify-center text-slate-400 hover:bg-white rounded hover:text-indigo-600 transition-all"
                         >
                            <Minus className="w-3 h-3" />
                         </button>
                         <span className="text-xs font-black min-w-[15px] text-center">{item.qty}</span>
                         <button 
-                           onClick={() => handleUpdateQty(item.name, 1)}
+                           onClick={() => handleUpdateQty(item.name, 1, item.isNew)}
                            className="w-6 h-6 flex items-center justify-center text-indigo-600 hover:bg-white rounded transition-all"
                         >
                            <Plus className="w-3 h-3" />
@@ -401,7 +410,7 @@ export default function CounterPanel() {
                     <td className="py-4 text-right text-xs font-black text-slate-800 font-mono">₹ {item.price * item.qty}</td>
                     <td className="py-4 px-4 text-right">
                       <button 
-                         onClick={() => handleRemoveItem(item.name)}
+                         onClick={() => handleRemoveItem(item.name, item.isNew)}
                          className="text-rose-400 hover:text-rose-600 p-1 opacity-0 group-hover:opacity-100 transition-all"
                       >
                          <Trash2 className="w-4 h-4" />
