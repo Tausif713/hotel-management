@@ -12,18 +12,37 @@ import { Link } from 'react-router-dom';
 export default function TablesBilling() {
   const [tables, setTables] = useState<any[]>([]);
 
+  const [activeBills, setActiveBills] = useState<Record<string, number>>({});
+
   useEffect(() => {
-    const fetchTables = async () => {
-      const { data, error } = await supabase.from('app_tables').select('*').order('number', { ascending: true });
-      if (data && !error) {
-        setTables(data);
-      } else {
-        setTables([]);
+    const fetchAllData = async () => {
+      const [{ data: tablesData }, { data: ordersData }] = await Promise.all([
+        supabase.from('app_tables').select('*').order('number', { ascending: true }),
+        supabase.from('app_orders').select('*').in('status', ['pending', 'cooking', 'ready', 'served'])
+      ]);
+      
+      if (tablesData) setTables(tablesData);
+      
+      if (ordersData) {
+         const billsMap: Record<string, number> = {};
+         ordersData.forEach(order => {
+           let orderTotal = 0;
+           if (Array.isArray(order.items)) {
+             order.items.forEach((item: any) => {
+               orderTotal += (item.price * item.qty);
+             });
+           }
+           const tax = Math.round(orderTotal * 0.05);
+           billsMap[order.table_no] = (billsMap[order.table_no] || 0) + orderTotal + tax;
+         });
+         setActiveBills(billsMap);
       }
     };
-    fetchTables();
+    fetchAllData();
+    
     const subscription = supabase.channel('tablesbilling_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_tables' }, fetchTables)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_tables' }, fetchAllData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_orders' }, fetchAllData)
       .subscribe();
     return () => { supabase.removeChannel(subscription); };
   }, []);
@@ -92,7 +111,7 @@ export default function TablesBilling() {
 
                 <div className="flex items-center justify-between px-2">
                    <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Active Bill</span>
-                   <span className="text-2xl font-black text-slate-900">{table.bill_amount}</span>
+                   <span className="text-2xl font-black text-slate-900">₹ {activeBills[table.number] || 0}</span>
                 </div>
 
                 <div className="pt-4 space-y-3">

@@ -171,7 +171,7 @@ export default function KitchenPanel() {
                            )}
                            {col.status === 'ready' && (
                              <button 
-                               onClick={() => moveOrder(order.id, 'completed')}
+                               onClick={() => moveOrder(order.id, 'served')}
                                className="w-full text-center py-3 text-emerald-600 text-[10px] font-black uppercase tracking-[0.2em] bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
                              >
                                <Utensils className="w-4 h-4" />

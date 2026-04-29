@@ -67,17 +67,11 @@ const topSellingItems = [
   { rank: 3, name: 'Garlic Naan', orders: '84 orders', image: 'https://images.unsplash.com/photo-1626074353765-517a681e40be?w=400&q=80' },
 ];
 
-const tableStats = [
-  { id: 1, status: 'Occupied', number: 'T01', seats: 4 },
-  { id: 2, status: 'In Use', number: 'T02', seats: 2 },
-  { id: 3, status: 'Free', number: 'T03', seats: 6 },
-  { id: 4, status: 'Occupied', number: 'T04', seats: 4 },
-];
-
 const staffOverview: any[] = [];
 
 export default function Dashboard() {
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [dashboardTables, setDashboardTables] = useState<any[]>([]);
   const [stats, setStats] = useState({ sales: 0, orders: 0, activeTables: 0, totalTables: 0 });
 
   useEffect(() => {
@@ -94,6 +88,7 @@ export default function Dashboard() {
         let activeTbls = 0;
         let totalTbls = 0;
         if (tables) {
+          setDashboardTables(tables.slice(0, 8)); // Show up to 8 tables
           totalTbls = tables.length;
           activeTbls = tables.filter(t => t.status !== 'free').length;
         }
@@ -303,28 +298,29 @@ export default function Dashboard() {
             <Link to="/tables-grid" className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">View All</Link>
           </div>
           <div className="grid grid-cols-4 gap-4">
-            {tableStats.map((table) => (
+            {dashboardTables.map((table) => (
               <div key={table.id} className={cn(
                 "p-4 rounded-2xl border flex flex-col gap-1 transition-all cursor-pointer hover:scale-[1.02] active:scale-95",
-                table.status === 'Occupied' ? "bg-emerald-50 border-emerald-100" : 
-                table.status === 'In Use' ? "bg-orange-50 border-orange-100" : "bg-slate-50 border-slate-100"
+                table.status === 'occupied' ? "bg-emerald-50 border-emerald-100" : 
+                table.status === 'reserved' ? "bg-orange-50 border-orange-100" : "bg-slate-50 border-slate-100"
               )}>
                 <div className="flex items-center gap-2">
                   <div className={cn(
                     "w-8 h-8 rounded-lg flex items-center justify-center",
-                    table.status === 'Occupied' ? "bg-white text-emerald-500" : 
-                    table.status === 'In Use' ? "bg-white text-orange-500" : "bg-white text-slate-400"
+                    table.status === 'occupied' ? "bg-white text-emerald-500" : 
+                    table.status === 'reserved' ? "bg-white text-orange-500" : "bg-white text-slate-400"
                   )}>
                     <LayoutGrid className="w-4 h-4" />
                   </div>
-                  <div>
-                    <p className={cn(
-                      "text-sm font-bold leading-none",
-                      table.status === 'Occupied' ? "text-emerald-700" : 
-                      table.status === 'In Use' ? "text-orange-700" : "text-slate-700"
-                    )}>Table {table.id}</p>
-                    <p className="text-[10px] text-slate-500 font-bold mt-1">{table.seats}</p>
-                  </div>
+                  <span className="text-sm font-black text-slate-900">{table.number}</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className={cn(
+                    "text-[10px] font-black uppercase tracking-widest",
+                    table.status === 'occupied' ? "text-emerald-600" : 
+                    table.status === 'reserved' ? "text-orange-600" : "text-slate-400"
+                  )}>{table.status}</span>
+                  <span className="text-[10px] font-bold text-slate-400">{table.capacity} Seats</span>
                 </div>
               </div>
             ))}

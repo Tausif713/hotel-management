@@ -49,7 +49,7 @@ export default function CounterPanel() {
     };
     
     const fetchActiveOrders = async () => {
-      const { data } = await supabase.from('app_orders').select('*').in('status', ['pending', 'cooking', 'ready']);
+      const { data } = await supabase.from('app_orders').select('*').in('status', ['pending', 'cooking', 'ready', 'served']);
       if (data) {
         const activeBills: Record<string, any[]> = {};
         data.forEach(order => {
@@ -139,7 +139,7 @@ export default function CounterPanel() {
     await supabase.from('app_tables').update({ status: 'free', bill_amount: '-', occupied_since: '-' }).eq('number', selectedTableId);
     
     // Mark active orders for this table as completed
-    await supabase.from('app_orders').update({ status: 'completed' }).eq('table_no', selectedTableId).in('status', ['pending', 'cooking', 'ready']);
+    await supabase.from('app_orders').update({ status: 'completed' }).eq('table_no', selectedTableId).in('status', ['pending', 'cooking', 'ready', 'served']);
   };
 
   const handleSendKOT = async () => {
