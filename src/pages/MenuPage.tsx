@@ -9,7 +9,7 @@ import {
   Flame,
   LayoutGrid,
   List as ListIcon,
-  MoreVertical
+  Camera
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -68,12 +68,27 @@ export default function MenuPage() {
 
   const handleEdit = async (item: any) => {
     const newName = window.prompt("Enter new name for the item:", item.name);
-    if (!newName) return;
+    if (newName === null) return;
+    
     const newPriceStr = window.prompt("Enter new price:", item.price);
-    if (!newPriceStr) return;
+    if (newPriceStr === null) return;
     const newPrice = parseFloat(newPriceStr);
 
-    await supabase.from('app_menu').update({ name: newName, price: newPrice }).eq('id', item.id);
+    const newImage = window.prompt("Enter new image URL:", item.image);
+    if (newImage === null) return;
+
+    await supabase.from('app_menu').update({ 
+      name: newName || item.name, 
+      price: isNaN(newPrice) ? item.price : newPrice,
+      image: newImage || item.image
+    }).eq('id', item.id);
+  };
+
+  const handleChangeImage = async (item: any) => {
+    const newImage = window.prompt("Paste the new image URL here:", item.image);
+    if (newImage) {
+      await supabase.from('app_menu').update({ image: newImage }).eq('id', item.id);
+    }
   };
 
   const filteredMenu = menu.filter(item => {
@@ -156,8 +171,12 @@ export default function MenuPage() {
                         <span className="text-[10px] font-black text-white uppercase tracking-widest">{item.category}</span>
                      </div>
                   </div>
-                  <button className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-xl text-white hover:bg-white hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100">
-                     <MoreVertical className="w-5 h-5" />
+                  <button 
+                     onClick={() => handleChangeImage(item)}
+                     className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-xl text-white hover:bg-white hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100"
+                     title="Change Photo"
+                  >
+                     <Camera className="w-5 h-5" />
                   </button>
                </div>
                
@@ -246,14 +265,17 @@ export default function MenuPage() {
                          </div>
                       </td>
                       <td className="px-8 py-4 text-right">
-                         <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => handleEdit(item)} className="p-2 bg-white rounded-lg text-slate-400 hover:text-indigo-600 border border-slate-100 shadow-sm">
-                               <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button onClick={() => handleDelete(item.id)} className="p-2 bg-white rounded-xl text-rose-500 hover:bg-rose-50 border border-slate-100 shadow-sm transition-all group-hover:opacity-100 opacity-0">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                         </div>
+                          <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                             <button onClick={() => handleChangeImage(item)} className="p-2 bg-white rounded-lg text-slate-400 hover:text-indigo-600 border border-slate-100 shadow-sm" title="Change Photo">
+                                <Camera className="w-3.5 h-3.5" />
+                             </button>
+                             <button onClick={() => handleEdit(item)} className="p-2 bg-white rounded-lg text-slate-400 hover:text-indigo-600 border border-slate-100 shadow-sm">
+                                <Edit2 className="w-3.5 h-3.5" />
+                             </button>
+                             <button onClick={() => handleDelete(item.id)} className="p-2 bg-white rounded-xl text-rose-500 hover:bg-rose-50 border border-slate-100 shadow-sm transition-all">
+                               <Trash2 className="w-4 h-4" />
+                             </button>
+                          </div>
                       </td>
                    </tr>
                  ))}
