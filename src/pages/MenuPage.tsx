@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { 
   Plus, 
   Search, 
@@ -14,26 +15,58 @@ import { cn } from '../lib/utils';
 
 const CATEGORIES = ['All Items', 'Starters', 'Main Course', 'Desserts', 'Beverages', 'Breads'];
 
-const INITIAL_MENU: any[] = [];
-
+const INITIAL_MENU: any[] = [
+  { id: '1', name: 'Butter Naan', category: 'Breads', price: 45, rating: 4.8, spicy: 0, isVeg: true, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=300&q=80', description: 'Soft and buttery Indian flatbread' },
+  { id: '2', name: 'Paneer Tikka', category: 'Starters', price: 240, rating: 4.9, spicy: 2, isVeg: true, image: 'https://images.unsplash.com/photo-1599487405270-86430f8e589b?auto=format&fit=crop&w=300&q=80', description: 'Grilled cottage cheese with spices' },
+  { id: '3', name: 'Chicken Biryani', category: 'Main Course', price: 320, rating: 4.7, spicy: 3, isVeg: false, image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=300&q=80', description: 'Aromatic basmati rice cooked with tender chicken' },
+  { id: '4', name: 'Veg Pasta', category: 'Main Course', price: 180, rating: 4.5, spicy: 1, isVeg: true, image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=300&q=80', description: 'Penne pasta in mixed sauce with veggies' },
 export default function MenuPage() {
-  const [menu, setMenu] = useState<any[]>(INITIAL_MENU);
+  const [menu, setMenu] = useState<any[]>([]);
+  
+  useEffect(() => {
+    const fetchMenu = async () => {
+      const { data, error } = await supabase.from('app_menu').select('*');
+      if (data && !error) {
+        setMenu(data.map(item => ({
+          id: item.id,
+          name: item.name,
+          category: item.category,
+          price: item.price,
+          isVeg: item.is_veg,
+          isAvailable: item.is_available,
+          spicy: item.spicy,
+          image: item.image,
+          description: item.description
+        })));
+      }
+    };
+    fetchMenu();
+    const subscription = supabase.channel('menu_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_menu' }, fetchMenu)
+      .subscribe();
+    return () => { supabase.removeChannel(subscription); };
+  }, []);
+
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeCategory, setActiveCategory] = useState('All Items');
   const [search, setSearch] = useState('');
 
-  const handleAddProduct = () => {
-    const newId = (menu.length + 1).toString();
-    setMenu([...menu, {
-      id: newId,
-      name: `New Item ${newId}`,
+  const handleAddProduct = async () => {
+    const newItem = {
+      name: `New Item ${Math.floor(1000 + Math.random() * 9000)}`,
       category: 'Main Course',
       price: 150,
-      isVeg: true,
-      isAvailable: true,
+      is_veg: true,
+      is_available: true,
       spicy: 1,
-      image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&q=80'
-    }]);
+      image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&q=80',
+      description: 'A delicious new dish'
+    };
+    await supabase.from('app_menu').insert(newItem);
+  };
+
+  const handleDelete = async (id: string) => {
+    await supabase.from('app_menu').delete().eq('id', id);
   };
 
   const filteredMenu = menu.filter(item => {
@@ -210,8 +243,8 @@ export default function MenuPage() {
                             <button className="p-2 bg-white rounded-lg text-slate-400 hover:text-indigo-600 border border-slate-100 shadow-sm">
                                <Edit2 className="w-3.5 h-3.5" />
                             </button>
-                            <button className="p-2 bg-white rounded-lg text-slate-400 hover:text-rose-600 border border-slate-100 shadow-sm">
-                               <Trash2 className="w-3.5 h-3.5" />
+                            <button onClick={() => handleDelete(item.id)} className="p-2 bg-white rounded-xl text-rose-500 hover:bg-rose-50 border border-slate-100 shadow-sm transition-all group-hover:opacity-100 opacity-0">
+                              <Trash2 className="w-4 h-4" />
                             </button>
                          </div>
                       </td>

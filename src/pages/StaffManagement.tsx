@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { 
   Plus, 
   Search, 
@@ -7,33 +8,57 @@ import {
   UserCheck,
   UserMinus,
   Edit2
+  Edit2,
+  Trash2
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const INITIAL_STAFF: any[] = [];
 
 export default function StaffManagement() {
+  const [staff, setStaff] = useState<any[]>([]);
+  const [filter, setFilter] = useState('All Staff');
   const [search, setSearch] = useState('');
-  const [staffList, setStaffList] = useState(INITIAL_STAFF);
 
-  const handleAddStaff = () => {
-    const newId = (staffList.length + 1).toString();
-    setStaffList([...staffList, {
-      id: newId,
-      name: `New Staff ${newId}`,
-      role: 'Staff',
-      email: `staff${newId}@grandhotel.com`,
-      phone: '+91 90000 00000',
+  useEffect(() => {
+    const fetchStaff = async () => {
+      const { data, error } = await supabase.from('app_staff').select('*');
+      if (data && !error) {
+        setStaff(data);
+      } else {
+        setStaff(INITIAL_STAFF);
+      }
+    };
+    fetchStaff();
+    const subscription = supabase.channel('staff_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_staff' }, fetchStaff)
+      .subscribe();
+    return () => { supabase.removeChannel(subscription); };
+  }, []);
+
+  const handleAddStaff = async () => {
+    const newStaff = {
+      name: `New Member ${Math.floor(100 + Math.random() * 900)}`,
+      role: 'Waiter',
+      department: 'Service',
       status: 'Active',
-      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80'
-    }]);
+      shift: 'Morning',
+      join_date: 'Today',
+      contact: '+91 98765 43210'
+    };
+    await supabase.from('app_staff').insert(newStaff);
   };
 
-  const toggleStatus = (id: string) => {
-    setStaffList(prev => prev.map(s => s.id === id ? { ...s, status: s.status === 'Active' ? 'Inactive' : 'Active' } : s));
+  const handleDelete = async (id: string) => {
+    await supabase.from('app_staff').delete().eq('id', id);
   };
 
-  const filteredStaff = staffList.filter(s => s.name.toLowerCase().includes(search.toLowerCase()));
+  const toggleStatus = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+    await supabase.from('app_staff').update({ status: newStatus }).eq('id', id);
+  };
+
+  const filteredStaff = staff.filter(s => s.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -62,45 +87,45 @@ export default function StaffManagement() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredStaff.map((staff) => (
-          <div key={staff.id} className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden group hover:shadow-xl transition-all duration-300">
+        {filteredStaff.map((member) => (
+          <div key={member.id} className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden group hover:shadow-xl transition-all duration-300">
              <div className="p-8 pb-4 text-center">
                 <div className="relative inline-block mb-6">
                    <div className="w-24 h-24 rounded-[2rem] overflow-hidden border-4 border-slate-50 shadow-lg mx-auto">
-                      <img src={staff.image} alt={staff.name} className="w-full h-full object-cover" />
+                      <img src={member.image || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80'} alt={member.name} className="w-full h-full object-cover" />
                    </div>
                    <div className={cn(
                      "absolute -bottom-1 -right-1 w-8 h-8 rounded-xl border-4 border-white flex items-center justify-center text-white shadow-md",
-                     staff.status === 'Active' ? "bg-emerald-500" : "bg-slate-300"
+                     member.status === 'Active' ? "bg-emerald-500" : "bg-slate-300"
                    )}>
-                      {staff.status === 'Active' ? <UserCheck className="w-4 h-4" /> : <UserMinus className="w-4 h-4" />}
+                      {member.status === 'Active' ? <UserCheck className="w-4 h-4" /> : <UserMinus className="w-4 h-4" />}
                    </div>
                 </div>
-                <h3 className="text-lg font-black text-slate-900 leading-none">{staff.name}</h3>
-                <p className="text-[10px] text-indigo-600 font-extrabold uppercase mt-2 tracking-[0.2em]">{staff.role}</p>
+                <h3 className="text-lg font-black text-slate-900 leading-none">{member.name}</h3>
+                <p className="text-[10px] text-indigo-600 font-extrabold uppercase mt-2 tracking-[0.2em]">{member.role}</p>
              </div>
 
              <div className="px-8 pb-8 space-y-4">
                 <div className="bg-slate-50 rounded-2xl p-4 space-y-3">
                    <div className="flex items-center gap-3 text-slate-500">
                       <Mail className="w-3.5 h-3.5" />
-                      <span className="text-[10px] font-bold truncate">{staff.email}</span>
+                      <span className="text-[10px] font-bold truncate">{member.email || 'N/A'}</span>
                    </div>
                    <div className="flex items-center gap-3 text-slate-500">
                       <Phone className="w-3.5 h-3.5" />
-                      <span className="text-[10px] font-bold">{staff.phone}</span>
+                      <span className="text-[10px] font-bold">{member.contact || member.phone || 'N/A'}</span>
                    </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 pt-2">
                    <button 
-                      onClick={() => toggleStatus(staff.id)}
+                      onClick={() => toggleStatus(member.id, member.status)}
                       className={cn(
                         "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2",
-                        staff.status === 'Active' ? "bg-rose-50 text-rose-500 hover:bg-rose-100" : "bg-emerald-50 text-emerald-500 hover:bg-emerald-100"
+                        member.status === 'Active' ? "bg-rose-50 text-rose-500 hover:bg-rose-100" : "bg-emerald-50 text-emerald-500 hover:bg-emerald-100"
                       )}
                    >
-                      {staff.status === 'Active' ? 'Deactivate' : 'Activate'}
+                      {member.status === 'Active' ? 'Deactivate' : 'Activate'}
                    </button>
                    <button className="py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2">
                       <Edit2 className="w-3.5 h-3.5" />

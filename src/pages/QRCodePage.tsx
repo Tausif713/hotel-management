@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { 
   Download, 
   Printer, 
@@ -7,23 +8,46 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
-const INITIAL_QR_TABLES: any[] = [];
+const TABLES = [
+  { id: '1', number: 'T01', capacity: 4, status: 'available', location: 'Main Hall' },
+  { id: '2', number: 'T02', capacity: 2, status: 'occupied', location: 'Main Hall' },
+  { id: '3', number: 'T03', capacity: 6, status: 'available', location: 'Terrace' },
+  { id: '4', number: 'T04', capacity: 4, status: 'reserved', location: 'Main Hall' },
+  { id: '5', number: 'T05', capacity: 8, status: 'cleaning', location: 'Private Room' },
+];
 
 export default function QRCodePage() {
-  const [qrTables, setQrTables] = useState<any[]>(INITIAL_QR_TABLES);
+  const [tables, setTables] = useState<any[]>([]);
   const [selectedTable, setSelectedTable] = useState('T01');
   const [newTableNo, setNewTableNo] = useState('');
 
-  const handleCreateQR = () => {
+  useEffect(() => {
+    const fetchTables = async () => {
+      const { data, error } = await supabase.from('app_tables').select('*').order('number', { ascending: true });
+      if (data && data.length > 0 && !error) {
+        setTables(data);
+        setSelectedTable(data[0].number);
+      } else {
+        setTables(TABLES);
+      }
+    };
+    fetchTables();
+  }, []);
+
+  const handleCreateQR = async () => {
     if (!newTableNo) return;
     const newTableId = 'T' + newTableNo.padStart(2, '0');
-    if (!qrTables.find(t => t.id === newTableId)) {
-      setQrTables([...qrTables, {
-        id: newTableId,
-        seats: 4,
-        status: 'Active',
-        scans: '0'
-      }]);
+    if (!tables.find(t => t.number === newTableId)) {
+      const newTable = {
+        number: newTableId,
+        capacity: 4,
+        status: 'free',
+        location: 'Main Hall'
+      };
+      await supabase.from('app_tables').insert(newTable);
+      // It will auto update via real-time ideally, but let's manually fetch for now
+      const { data } = await supabase.from('app_tables').select('*').order('number', { ascending: true });
+      if (data) setTables(data);
     }
     setSelectedTable(newTableId);
     setNewTableNo('');
@@ -139,13 +163,13 @@ export default function QRCodePage() {
                  <span className="bg-slate-100 px-3 py-1 rounded-lg text-[10px] font-black text-slate-500 uppercase">Manage</span>
               </div>
               <div className="space-y-4">
-                 {qrTables.map((table) => (
+                 {tables.map((table) => (
                    <div 
                      key={table.id} 
-                     onClick={() => setSelectedTable(table.id)}
+                     onClick={() => setSelectedTable(table.number)}
                      className={cn(
                        "p-4 rounded-2xl border transition-all group cursor-pointer",
-                       selectedTable === table.id ? "bg-indigo-50/50 border-indigo-200" : "bg-slate-50 border-slate-100 hover:border-indigo-200"
+                       selectedTable === table.number ? "bg-indigo-50/50 border-indigo-200" : "bg-slate-50 border-slate-100 hover:border-indigo-200"
                      )}
                    >
                       <div className="flex items-center justify-between mb-4">

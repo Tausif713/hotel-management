@@ -13,11 +13,9 @@ import {
   Clock,
   ChevronLeft
 } from 'lucide-react';
-import { cn } from '../lib/utils';
-
-const MENU: any[] = [
+const INITIAL_MENU: any[] = [
   { id: '1', name: 'Butter Naan', category: 'Breads', price: 45, rating: 4.8, spicy: 0, isVeg: true, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=300&q=80', description: 'Soft and buttery Indian flatbread' },
-  { id: '2', name: 'Paneer Tikka', category: 'Starter', price: 240, rating: 4.9, spicy: 2, isVeg: true, image: 'https://images.unsplash.com/photo-1599487405270-86430f8e589b?auto=format&fit=crop&w=300&q=80', description: 'Grilled cottage cheese with spices' },
+  { id: '2', name: 'Paneer Tikka', category: 'Starters', price: 240, rating: 4.9, spicy: 2, isVeg: true, image: 'https://images.unsplash.com/photo-1599487405270-86430f8e589b?auto=format&fit=crop&w=300&q=80', description: 'Grilled cottage cheese with spices' },
   { id: '3', name: 'Chicken Biryani', category: 'Main Course', price: 320, rating: 4.7, spicy: 3, isVeg: false, image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=300&q=80', description: 'Aromatic basmati rice cooked with tender chicken' },
   { id: '4', name: 'Veg Pasta', category: 'Main Course', price: 180, rating: 4.5, spicy: 1, isVeg: true, image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=300&q=80', description: 'Penne pasta in mixed sauce with veggies' },
 ];
@@ -25,8 +23,31 @@ const MENU: any[] = [
 export default function CustomerMenu() {
   const { id } = useParams();
   const [cart, setCart] = useState<any[]>([]);
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeCategory, setActiveCategory] = useState('All Items');
   const [searchTerm, setSearchTerm] = useState('');
+  const [menuItems, setMenuItems] = useState<any[]>(INITIAL_MENU);
+
+  useEffect(() => {
+    const fetchMenu = async () => {
+      const { data, error } = await supabase.from('app_menu').select('*');
+      if (data && data.length > 0 && !error) {
+        setMenuItems(data.map(item => ({
+          id: item.id,
+          name: item.name,
+          category: item.category,
+          price: item.price,
+          isVeg: item.is_veg,
+          isAvailable: item.is_available,
+          spicy: item.spicy,
+          image: item.image,
+          description: item.description
+        })));
+      } else {
+        setMenuItems(INITIAL_MENU);
+      }
+    };
+    fetchMenu();
+  }, []);
 
   const addToCart = (item: any) => {
     const existing = cart.find(i => i.id === item.id);
@@ -50,8 +71,8 @@ export default function CustomerMenu() {
   const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
   const itemCount = cart.reduce((acc, i) => acc + i.qty, 0);
 
-  const filteredMenu = MENU.filter(item => 
-    (activeCategory === 'All' || item.category === activeCategory) &&
+  const filteredMenu = menuItems.filter(item => 
+    (activeCategory === 'All Items' || item.category === activeCategory) &&
     (item.name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -128,7 +149,7 @@ export default function CustomerMenu() {
 
       {/* Categories */}
       <div className="relative z-10 px-6 py-4 overflow-x-auto scrollbar-hide flex gap-3">
-        {['All', 'Starter', 'Main Course', 'Breads', 'Beverages'].map((cat) => (
+        {['All Items', 'Starters', 'Main Course', 'Breads', 'Beverages', 'Desserts'].map((cat) => (
           <button 
             key={cat}
             onClick={() => setActiveCategory(cat)}
