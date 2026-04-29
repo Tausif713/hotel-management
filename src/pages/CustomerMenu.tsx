@@ -159,14 +159,13 @@ export default function CustomerMenu() {
         ))}
       </div>
 
-      {/* Menu List */}
-      <div className="flex-1 overflow-y-auto px-6 pb-32 pt-2 z-10 scrollbar-hide grid grid-cols-3 gap-3">
+      <div className="flex-1 overflow-y-auto px-6 pb-32 pt-2 z-10 scrollbar-hide grid grid-cols-2 gap-4">
         {filteredMenu.map((item) => (
           <div 
             key={item.id} 
             className="bg-white rounded-[2rem] p-3 flex flex-col gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-50 active:scale-[0.98] transition-transform"
           >
-            <div className="w-full h-32 rounded-2xl overflow-hidden relative shadow-inner">
+            <div className="w-full h-36 rounded-2xl overflow-hidden relative shadow-inner">
               <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
               <div className="absolute top-2 left-2">
                 {item.isVeg ? (
