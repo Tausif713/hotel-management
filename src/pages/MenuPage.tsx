@@ -9,7 +9,8 @@ import {
   Flame,
   LayoutGrid,
   List as ListIcon,
-  Camera
+  Camera,
+  X
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -47,57 +48,72 @@ export default function MenuPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeCategory, setActiveCategory] = useState('All Items');
   const [search, setSearch] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    price: '',
+    category: 'Main Course',
+    isVeg: true,
+    isAvailable: true,
+    image: '',
+    description: ''
+  });
 
-  const handleAddProduct = async () => {
-    const name = window.prompt("Enter product name:");
-    if (!name) return;
-    
-    const priceStr = window.prompt("Enter price:", "150");
-    if (!priceStr) return;
-    const price = parseFloat(priceStr);
-
-    const category = window.prompt("Enter category (Starters, Main Course, Desserts, Beverages):", "Main Course");
-    if (!category) return;
-
-    const newItem = {
-      name,
-      category,
-      price: isNaN(price) ? 150 : price,
-      is_veg: true,
-      is_available: true,
-      spicy: 1,
+  const handleAddProduct = () => {
+    setEditingItem(null);
+    setFormData({
+      name: '',
+      price: '',
+      category: 'Main Course',
+      isVeg: true,
+      isAvailable: true,
       image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&q=80',
-      description: 'A delicious new dish'
+      description: ''
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (item: any) => {
+    setEditingItem(item);
+    setFormData({
+      name: item.name,
+      price: item.price.toString(),
+      category: item.category,
+      isVeg: item.isVeg,
+      isAvailable: item.isAvailable,
+      image: item.image,
+      description: item.description || ''
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const dataToSave = {
+      name: formData.name,
+      price: parseFloat(formData.price),
+      category: formData.category,
+      is_veg: formData.isVeg,
+      is_available: formData.isAvailable,
+      image: formData.image,
+      description: formData.description
     };
 
-    const { error } = await supabase.from('app_menu').insert(newItem);
-    if (error) {
-      alert("Failed to add product: " + error.message);
+    if (editingItem) {
+      const { error } = await supabase.from('app_menu').update(dataToSave).eq('id', editingItem.id);
+      if (error) alert(error.message);
     } else {
-      alert("Product added successfully!");
+      const { error } = await supabase.from('app_menu').insert(dataToSave);
+      if (error) alert(error.message);
     }
+    setIsModalOpen(false);
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from('app_menu').delete().eq('id', id);
-  };
-
-  const handleEdit = async (item: any) => {
-    const newName = window.prompt("Enter new name for the item:", item.name);
-    if (newName === null) return;
-    
-    const newPriceStr = window.prompt("Enter new price:", item.price);
-    if (newPriceStr === null) return;
-    const newPrice = parseFloat(newPriceStr);
-
-    const newImage = window.prompt("Enter new image URL:", item.image);
-    if (newImage === null) return;
-
-    await supabase.from('app_menu').update({ 
-      name: newName || item.name, 
-      price: isNaN(newPrice) ? item.price : newPrice,
-      image: newImage || item.image
-    }).eq('id', item.id);
+    if (window.confirm("Delete this item?")) {
+      await supabase.from('app_menu').delete().eq('id', id);
+    }
   };
 
   const handleChangeImage = async (item: any) => {
@@ -297,6 +313,94 @@ export default function MenuPage() {
                  ))}
               </tbody>
            </table>
+        </div>
+      )}
+      {/* Menu Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-300">
+              <div className="p-8 pb-0 flex items-center justify-between">
+                 <h2 className="text-xl font-black text-slate-900 tracking-tight">{editingItem ? 'Edit Menu Item' : 'Add New Item'}</h2>
+                 <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-50 rounded-full transition-all">
+                    <X className="w-6 h-6 text-slate-400" />
+                 </button>
+              </div>
+
+              <form onSubmit={handleSave} className="p-8 space-y-5">
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Item Name</label>
+                       <input 
+                         type="text" 
+                         required
+                         className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none"
+                         value={formData.name}
+                         onChange={(e) => setFormData({...formData, name: e.target.value})}
+                       />
+                    </div>
+                    <div className="space-y-1.5">
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Price (₹)</label>
+                       <input 
+                         type="number" 
+                         required
+                         className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none"
+                         value={formData.price}
+                         onChange={(e) => setFormData({...formData, price: e.target.value})}
+                       />
+                    </div>
+                 </div>
+
+                 <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Category</label>
+                    <select 
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none appearance-none"
+                      value={formData.category}
+                      onChange={(e) => setFormData({...formData, category: e.target.value})}
+                    >
+                       {CATEGORIES.filter(c => c !== 'All Items').map(c => (
+                         <option key={c} value={c}>{c}</option>
+                       ))}
+                    </select>
+                 </div>
+
+                 <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Image URL</label>
+                    <input 
+                      type="text" 
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none"
+                      value={formData.image}
+                      onChange={(e) => setFormData({...formData, image: e.target.value})}
+                    />
+                 </div>
+
+                 <div className="flex gap-4 pt-2">
+                    <label className="flex-1 flex items-center gap-3 p-4 bg-slate-50 rounded-2xl cursor-pointer border-2 border-transparent has-[:checked]:border-indigo-600 transition-all">
+                       <input 
+                         type="checkbox" 
+                         className="hidden" 
+                         checked={formData.isVeg} 
+                         onChange={(e) => setFormData({...formData, isVeg: e.target.checked})} 
+                       />
+                       <div className={cn("w-5 h-5 rounded-full border-2", formData.isVeg ? "bg-emerald-500 border-emerald-500" : "border-slate-300")} />
+                       <span className="text-xs font-black text-slate-700 uppercase tracking-widest">Veg Item</span>
+                    </label>
+                    <label className="flex-1 flex items-center gap-3 p-4 bg-slate-50 rounded-2xl cursor-pointer border-2 border-transparent has-[:checked]:border-indigo-600 transition-all">
+                       <input 
+                         type="checkbox" 
+                         className="hidden" 
+                         checked={formData.isAvailable} 
+                         onChange={(e) => setFormData({...formData, isAvailable: e.target.checked})} 
+                       />
+                       <div className={cn("w-5 h-5 rounded-full border-2", formData.isAvailable ? "bg-indigo-500 border-indigo-500" : "border-slate-300")} />
+                       <span className="text-xs font-black text-slate-700 uppercase tracking-widest">In Stock</span>
+                    </label>
+                 </div>
+
+                 <button type="submit" className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">
+                    {editingItem ? 'Save Changes' : 'Create Product'}
+                 </button>
+              </form>
+           </div>
         </div>
       )}
     </div>

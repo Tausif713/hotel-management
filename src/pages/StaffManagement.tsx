@@ -8,7 +8,8 @@ import {
   UserCheck,
   UserMinus,
   Edit2,
-  Trash2
+  Trash2,
+  X
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -34,29 +35,62 @@ export default function StaffManagement() {
     return () => { supabase.removeChannel(subscription); };
   }, []);
 
-  const handleAddStaff = async () => {
-    const name = window.prompt("Enter staff name:");
-    if (!name) return;
-    const role = window.prompt("Enter staff role (e.g., Waiter, Chef, Cashier):", "Waiter");
-    if (!role) return;
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    role: 'Waiter',
+    email: '',
+    contact: '',
+    image: ''
+  });
 
-    const newStaff = {
-      name,
-      role,
-      department: 'Service',
-      status: 'Active',
-      shift: 'Morning',
-      join_date: new Date().toLocaleDateString(),
-      contact: '+91 98765 43210',
+  const handleAddStaff = () => {
+    setEditingMember(null);
+    setFormData({
+      name: '',
+      role: 'Waiter',
+      email: '',
+      contact: '',
       image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80'
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleEditStaff = (member: any) => {
+    setEditingMember(member);
+    setFormData({
+      name: member.name,
+      role: member.role,
+      email: member.email || '',
+      contact: member.contact || member.phone || '',
+      image: member.image || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80'
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const dataToSave = {
+      name: formData.name,
+      role: formData.role,
+      email: formData.email,
+      contact: formData.contact,
+      image: formData.image,
+      department: 'Service',
+      status: editingMember ? editingMember.status : 'Active',
+      shift: 'Morning',
+      join_date: editingMember ? editingMember.join_date : new Date().toLocaleDateString()
     };
-    
-    const { error } = await supabase.from('app_staff').insert(newStaff);
-    if (error) {
-      alert("Error adding staff: " + error.message);
+
+    if (editingMember) {
+      const { error } = await supabase.from('app_staff').update(dataToSave).eq('id', editingMember.id);
+      if (error) alert(error.message);
     } else {
-      alert("Staff member added successfully!");
+      const { error } = await supabase.from('app_staff').insert(dataToSave);
+      if (error) alert(error.message);
     }
+    setIsModalOpen(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -70,20 +104,6 @@ export default function StaffManagement() {
     const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
     const { error } = await supabase.from('app_staff').update({ status: newStatus }).eq('id', id);
     if (error) alert("Error updating status: " + error.message);
-  };
-
-  const handleEditStaff = async (member: any) => {
-    const newName = window.prompt("Enter new name for the staff member:", member.name);
-    if (newName === null) return;
-    const newRole = window.prompt("Enter new role:", member.role);
-    if (newRole === null) return;
-    
-    const { error } = await supabase.from('app_staff').update({ 
-      name: newName || member.name, 
-      role: newRole || member.role 
-    }).eq('id', member.id);
-    
-    if (error) alert("Error updating staff: " + error.message);
   };
 
   const filteredStaff = staff.filter(s => s.name.toLowerCase().includes(search.toLowerCase()));
@@ -167,6 +187,82 @@ export default function StaffManagement() {
           </div>
         ))}
       </div>
+      {/* Staff Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-300">
+              <div className="p-8 pb-0 flex items-center justify-between">
+                 <h2 className="text-xl font-black text-slate-900 tracking-tight">{editingMember ? 'Edit Staff Member' : 'Add New Staff'}</h2>
+                 <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-50 rounded-full transition-all">
+                    <X className="w-6 h-6 text-slate-400" />
+                 </button>
+              </div>
+
+              <form onSubmit={handleSave} className="p-8 space-y-5">
+                 <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Full Name</label>
+                    <input 
+                      type="text" 
+                      required
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none"
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    />
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Role</label>
+                       <select 
+                         className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none appearance-none"
+                         value={formData.role}
+                         onChange={(e) => setFormData({...formData, role: e.target.value})}
+                       >
+                          <option value="Admin">Admin</option>
+                          <option value="Chef">Chef</option>
+                          <option value="Waiter">Waiter</option>
+                          <option value="Cashier">Cashier</option>
+                       </select>
+                    </div>
+                    <div className="space-y-1.5">
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Contact Number</label>
+                       <input 
+                         type="text" 
+                         required
+                         className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none"
+                         value={formData.contact}
+                         onChange={(e) => setFormData({...formData, contact: e.target.value})}
+                       />
+                    </div>
+                 </div>
+
+                 <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Email Address</label>
+                    <input 
+                      type="email" 
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none"
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    />
+                 </div>
+
+                 <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Photo URL</label>
+                    <input 
+                      type="text" 
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none"
+                      value={formData.image}
+                      onChange={(e) => setFormData({...formData, image: e.target.value})}
+                    />
+                 </div>
+
+                 <button type="submit" className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">
+                    {editingMember ? 'Save Changes' : 'Register Staff'}
+                 </button>
+              </form>
+           </div>
+        </div>
+      )}
     </div>
   );
 }

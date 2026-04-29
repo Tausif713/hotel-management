@@ -11,7 +11,8 @@ import {
   XCircle,
   Clock,
   Edit2,
-  Trash2
+  Trash2,
+  X
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -37,44 +38,54 @@ export default function TableManagement() {
     return () => { supabase.removeChannel(subscription); };
   }, []);
 
-  const handleAddTable = async () => {
-    const numberStr = window.prompt("Enter Table Number (e.g., T01, T02):");
-    if (!numberStr) return;
-    const capacityStr = window.prompt("Enter Capacity (Seats):", "4");
-    if (!capacityStr) return;
-    const capacity = parseInt(capacityStr);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTable, setEditingTable] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    number: '',
+    capacity: '4',
+    location: 'Main Hall'
+  });
 
-    const newTable = {
-      number: numberStr,
-      capacity: isNaN(capacity) ? 4 : capacity,
-      status: 'free',
-      location: 'Main Hall',
-      type: '-',
-      bill_amount: '-',
-      occupied_since: '-'
-    };
-    
-    const { error } = await supabase.from('app_tables').insert(newTable);
-    if (error) {
-      alert("Error adding table: " + error.message);
-    } else {
-      alert("Table added successfully!");
-    }
+  const handleAddTable = () => {
+    setEditingTable(null);
+    setFormData({
+      number: `T${(tables.length + 1).toString().padStart(2, '0')}`,
+      capacity: '4',
+      location: 'Main Hall'
+    });
+    setIsModalOpen(true);
   };
 
-  const handleEditTable = async (table: any) => {
-    const newNum = window.prompt("Enter new table number:", table.number);
-    if (newNum === null) return;
-    const newCapStr = window.prompt("Enter new capacity:", table.capacity);
-    if (newCapStr === null) return;
-    const newCap = parseInt(newCapStr);
+  const handleEditTable = (table: any) => {
+    setEditingTable(table);
+    setFormData({
+      number: table.number,
+      capacity: table.capacity.toString(),
+      location: table.location || 'Main Hall'
+    });
+    setIsModalOpen(true);
+  };
 
-    const { error } = await supabase.from('app_tables').update({
-      number: newNum || table.number,
-      capacity: isNaN(newCap) ? table.capacity : newCap
-    }).eq('id', table.id);
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const dataToSave = {
+      number: formData.number,
+      capacity: parseInt(formData.capacity),
+      location: formData.location,
+      status: editingTable ? editingTable.status : 'free',
+      type: editingTable ? editingTable.type : '-',
+      bill_amount: editingTable ? editingTable.bill_amount : '-',
+      occupied_since: editingTable ? editingTable.occupied_since : '-'
+    };
 
-    if (error) alert("Error updating table: " + error.message);
+    if (editingTable) {
+      const { error } = await supabase.from('app_tables').update(dataToSave).eq('id', editingTable.id);
+      if (error) alert(error.message);
+    } else {
+      const { error } = await supabase.from('app_tables').insert(dataToSave);
+      if (error) alert(error.message);
+    }
+    setIsModalOpen(false);
   };
 
   const toggleTable = async (id: string) => {
@@ -230,6 +241,62 @@ export default function TableManagement() {
           </div>
         ))}
       </div>
+      {/* Table Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-300">
+              <div className="p-8 pb-0 flex items-center justify-between">
+                 <h2 className="text-xl font-black text-slate-900 tracking-tight">{editingTable ? 'Edit Table' : 'Add New Table'}</h2>
+                 <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-50 rounded-full transition-all">
+                    <X className="w-6 h-6 text-slate-400" />
+                 </button>
+              </div>
+
+              <form onSubmit={handleSave} className="p-8 space-y-5">
+                 <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Table Number</label>
+                    <input 
+                      type="text" 
+                      required
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none"
+                      value={formData.number}
+                      onChange={(e) => setFormData({...formData, number: e.target.value})}
+                      placeholder="e.g. T01"
+                    />
+                 </div>
+
+                 <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Capacity (Seats)</label>
+                    <input 
+                      type="number" 
+                      required
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none"
+                      value={formData.capacity}
+                      onChange={(e) => setFormData({...formData, capacity: e.target.value})}
+                    />
+                 </div>
+
+                 <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Location</label>
+                    <select 
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none appearance-none"
+                      value={formData.location}
+                      onChange={(e) => setFormData({...formData, location: e.target.value})}
+                    >
+                       <option value="Main Hall">Main Hall</option>
+                       <option value="Rooftop">Rooftop</option>
+                       <option value="Garden">Garden</option>
+                       <option value="VIP Cabin">VIP Cabin</option>
+                    </select>
+                 </div>
+
+                 <button type="submit" className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">
+                    {editingTable ? 'Save Changes' : 'Create Table'}
+                 </button>
+              </form>
+           </div>
+        </div>
+      )}
     </div>
   );
 }
