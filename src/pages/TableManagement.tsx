@@ -185,10 +185,10 @@ export default function TableManagement() {
                      onClick={() => toggleTable(table.id)}
                      className={cn(
                        "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-sm",
-                       table.status === 'Available' ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                       table.status === 'free' ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                      )}
                   >
-                    {table.status === 'Available' ? 'Book Table' : 'Free Table'}
+                    {table.status === 'free' ? 'Book Table' : 'Free Table'}
                   </button>
                   <button className="py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-black text-slate-600 uppercase tracking-wider hover:bg-slate-50 transition-all shadow-sm flex items-center justify-center gap-1.5">
                     <History className="w-3.5 h-3.5" />

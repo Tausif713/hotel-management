@@ -20,11 +20,12 @@ import {
   X
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 export default function CounterPanel() {
+  const [searchParams] = useSearchParams();
   const [activeView, setActiveView] = useState<'table' | 'order'>('table');
-  const [selectedTableId, setSelectedTableId] = useState('T01');
+  const [selectedTableId, setSelectedTableId] = useState(searchParams.get('table') || 'T01');
   const [tables, setTables] = useState<any[]>([]);
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [bills, setBills] = useState<Record<string, any>>({});

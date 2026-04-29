@@ -94,7 +94,13 @@ export default function AllOrders() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {orders.map((order) => (
+              {orders.filter(order => {
+                if (activeFilter === 'All Orders') return true;
+                if (activeFilter === 'Completed') return order.status === 'completed';
+                if (activeFilter === 'In Progress') return order.status !== 'completed' && order.status !== 'cancelled';
+                if (activeFilter === 'Cancelled') return order.status === 'cancelled';
+                return true;
+              }).map((order) => (
                 <tr key={order.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
                   <td className="px-8 py-6">
                     <span className="text-sm font-black text-slate-900">{order.id}</span>

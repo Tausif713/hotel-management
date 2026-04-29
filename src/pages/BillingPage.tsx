@@ -118,7 +118,12 @@ export default function BillingPage() {
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-50">
-                    {invoices.map((inv) => (
+                    {invoices.filter(inv => {
+                      if (activeTab === 'All Bills') return true;
+                      if (activeTab === 'Paid') return inv.status === 'completed';
+                      if (activeTab === 'Pending') return inv.status !== 'completed';
+                      return true;
+                    }).map((inv) => (
                       <tr key={inv.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
                          <td className="px-8 py-5">
                             <div className="flex flex-col">
