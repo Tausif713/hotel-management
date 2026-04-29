@@ -97,16 +97,6 @@ export default function Sidebar() {
           <span className="text-sm font-semibold tracking-wide">Sign Out</span>
         </button>
 
-        <div className="bg-gradient-to-br from-indigo-600/20 to-purple-600/20 rounded-[2rem] overflow-hidden p-6 relative border border-white/5 shadow-2xl backdrop-blur-xl group">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500" />
-          <div className="text-center">
-            <h4 className="text-xs font-black text-white uppercase tracking-[0.3em] mb-4">Scan QR to Order</h4>
-            <div className="bg-white p-3 rounded-2xl inline-block shadow-inner mb-2 group-hover:scale-105 transition-transform duration-500">
-               <QrCode className="w-20 h-20 text-slate-900" />
-            </div>
-            <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500" />
-          </div>
-        </div>
       </div>
     </aside>
   );
