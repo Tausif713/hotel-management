@@ -24,6 +24,7 @@ const statusStyles: any = {
 
 export default function LiveOrders() {
   const [activeFilter, setActiveFilter] = useState('All Orders');
+  const [search, setSearch] = useState('');
   const [liveOrders, setLiveOrders] = useState<any[]>([]);
 
   useEffect(() => {
@@ -42,13 +43,11 @@ export default function LiveOrders() {
           status: o.status,
           time: new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           items: o.items || [],
-          amount: o.total_amount
+          amount: o.total_amount,
+          type: 'Dine-in',
+          waitTime: '12m'
         }));
         setLiveOrders(formatted);
-      } else {
-        // Fallback to local storage if Supabase fails or not configured
-        const stored = JSON.parse(localStorage.getItem('restaurant_orders') || '[]');
-        setLiveOrders(stored.filter((o: any) => o.status !== 'completed' && o.status !== 'cancelled'));
       }
     };
     
@@ -58,6 +57,16 @@ export default function LiveOrders() {
       .subscribe();
     return () => { supabase.removeChannel(subscription); };
   }, []);
+
+  const filteredOrders = liveOrders.filter(order => {
+    const matchesSearch = order.id.toLowerCase().includes(search.toLowerCase()) || 
+                         order.table.toLowerCase().includes(search.toLowerCase());
+    const matchesFilter = activeFilter === 'All Orders' || 
+                         (activeFilter === 'Kitchen' && (order.status === 'pending' || order.status === 'cooking')) ||
+                         (activeFilter === 'Ready' && order.status === 'ready') ||
+                         (activeFilter === 'Dispatch' && order.status === 'served');
+    return matchesSearch && matchesFilter;
+  });
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -123,6 +132,8 @@ export default function LiveOrders() {
                   type="text" 
                   placeholder="Order ID / Table..."
                   className="bg-slate-50 border-none rounded-xl py-2.5 pl-12 pr-6 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 min-w-[240px]"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
               <button className="p-2.5 bg-slate-50 text-slate-400 rounded-xl hover:text-indigo-600 border border-transparent hover:border-indigo-100 transition-all">
@@ -145,7 +156,7 @@ export default function LiveOrders() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {liveOrders.map((order) => (
+              {filteredOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-slate-50 transition-colors group cursor-pointer">
                   <td className="px-8 py-6">
                     <div className="flex flex-col">

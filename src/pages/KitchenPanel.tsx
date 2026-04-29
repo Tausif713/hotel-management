@@ -16,30 +16,28 @@ import { cn } from '../lib/utils';
 export default function KitchenPanel() {
   const [orders, setOrders] = useState<any[]>([]);
 
+  const fetchOrders = async () => {
+    const { data, error } = await supabase
+      .from('app_orders')
+      .select('*')
+      .neq('status', 'completed')
+      .neq('status', 'cancelled')
+      .order('created_at', { ascending: true });
+      
+    if (data && !error) {
+      const formatted = data.map((o: any) => ({
+        id: o.id.substring(0, 8),
+        dbId: o.id,
+        table: o.table_no,
+        status: o.status,
+        time: new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        items: o.items || []
+      }));
+      setOrders(formatted);
+    }
+  };
+
   useEffect(() => {
-    const fetchOrders = async () => {
-      const { data, error } = await supabase
-        .from('app_orders')
-        .select('*')
-        .neq('status', 'completed')
-        .neq('status', 'cancelled')
-        .order('created_at', { ascending: true });
-        
-      if (data && !error) {
-        const formatted = data.map((o: any) => ({
-          id: o.id.substring(0, 8),
-          dbId: o.id,
-          table: o.table_no,
-          status: o.status,
-          time: new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          items: o.items || []
-        }));
-        setOrders(formatted);
-      } else {
-        const stored = JSON.parse(localStorage.getItem('restaurant_orders') || '[]');
-        setOrders(stored);
-      }
-    };
     fetchOrders();
     const subscription = supabase.channel('kitchen_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'app_orders' }, fetchOrders)
@@ -48,16 +46,22 @@ export default function KitchenPanel() {
   }, []);
 
   const moveOrder = async (id: string, nextStatus: string) => {
-    // Optimistic UI update
-    const updated = orders.map(o => o.id === id ? { ...o, status: nextStatus } : o);
-    setOrders(updated);
-    
-    // Find the real DB ID if using Supabase
+    // For local ID (id) vs DB ID (dbId)
     const orderToUpdate = orders.find(o => o.id === id);
-    if (orderToUpdate?.dbId) {
-      await supabase.from('app_orders').update({ status: nextStatus }).eq('id', orderToUpdate.dbId);
-    } else {
-      localStorage.setItem('restaurant_orders', JSON.stringify(updated));
+    if (!orderToUpdate) return;
+
+    const realNextStatus = nextStatus === 'served' ? 'completed' : nextStatus;
+
+    // Optimistic UI update
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, status: realNextStatus } : o));
+    
+    if (orderToUpdate.dbId) {
+      const { error } = await supabase.from('app_orders').update({ status: realNextStatus }).eq('id', orderToUpdate.dbId);
+      if (error) {
+        alert("Error updating order status: " + error.message);
+        // Rollback (simplified)
+        fetchOrders();
+      }
     }
   };
 

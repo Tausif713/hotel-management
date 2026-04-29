@@ -35,34 +35,55 @@ export default function StaffManagement() {
   }, []);
 
   const handleAddStaff = async () => {
+    const name = window.prompt("Enter staff name:");
+    if (!name) return;
+    const role = window.prompt("Enter staff role (e.g., Waiter, Chef, Cashier):", "Waiter");
+    if (!role) return;
+
     const newStaff = {
-      name: `New Member ${Math.floor(100 + Math.random() * 900)}`,
-      role: 'Waiter',
+      name,
+      role,
       department: 'Service',
       status: 'Active',
       shift: 'Morning',
-      join_date: 'Today',
-      contact: '+91 98765 43210'
+      join_date: new Date().toLocaleDateString(),
+      contact: '+91 98765 43210',
+      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80'
     };
-    await supabase.from('app_staff').insert(newStaff);
+    
+    const { error } = await supabase.from('app_staff').insert(newStaff);
+    if (error) {
+      alert("Error adding staff: " + error.message);
+    } else {
+      alert("Staff member added successfully!");
+    }
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from('app_staff').delete().eq('id', id);
+    if (window.confirm("Are you sure you want to remove this staff member?")) {
+      const { error } = await supabase.from('app_staff').delete().eq('id', id);
+      if (error) alert("Error deleting staff: " + error.message);
+    }
   };
 
   const toggleStatus = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
-    await supabase.from('app_staff').update({ status: newStatus }).eq('id', id);
+    const { error } = await supabase.from('app_staff').update({ status: newStatus }).eq('id', id);
+    if (error) alert("Error updating status: " + error.message);
   };
 
   const handleEditStaff = async (member: any) => {
     const newName = window.prompt("Enter new name for the staff member:", member.name);
-    if (!newName) return;
-    const newRole = window.prompt("Enter new role (e.g., Waiter, Cashier, Chef):", member.role);
-    if (!newRole) return;
+    if (newName === null) return;
+    const newRole = window.prompt("Enter new role:", member.role);
+    if (newRole === null) return;
     
-    await supabase.from('app_staff').update({ name: newName, role: newRole }).eq('id', member.id);
+    const { error } = await supabase.from('app_staff').update({ 
+      name: newName || member.name, 
+      role: newRole || member.role 
+    }).eq('id', member.id);
+    
+    if (error) alert("Error updating staff: " + error.message);
   };
 
   const filteredStaff = staff.filter(s => s.name.toLowerCase().includes(search.toLowerCase()));

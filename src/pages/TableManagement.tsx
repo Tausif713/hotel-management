@@ -38,17 +38,43 @@ export default function TableManagement() {
   }, []);
 
   const handleAddTable = async () => {
-    const newNumber = `T${(tables.length + 1).toString().padStart(2, '0')}`;
+    const numberStr = window.prompt("Enter Table Number (e.g., T01, T02):");
+    if (!numberStr) return;
+    const capacityStr = window.prompt("Enter Capacity (Seats):", "4");
+    if (!capacityStr) return;
+    const capacity = parseInt(capacityStr);
+
     const newTable = {
-      number: newNumber,
-      capacity: 4,
+      number: numberStr,
+      capacity: isNaN(capacity) ? 4 : capacity,
       status: 'free',
       location: 'Main Hall',
       type: '-',
       bill_amount: '-',
       occupied_since: '-'
     };
-    await supabase.from('app_tables').insert(newTable);
+    
+    const { error } = await supabase.from('app_tables').insert(newTable);
+    if (error) {
+      alert("Error adding table: " + error.message);
+    } else {
+      alert("Table added successfully!");
+    }
+  };
+
+  const handleEditTable = async (table: any) => {
+    const newNum = window.prompt("Enter new table number:", table.number);
+    if (newNum === null) return;
+    const newCapStr = window.prompt("Enter new capacity:", table.capacity);
+    if (newCapStr === null) return;
+    const newCap = parseInt(newCapStr);
+
+    const { error } = await supabase.from('app_tables').update({
+      number: newNum || table.number,
+      capacity: isNaN(newCap) ? table.capacity : newCap
+    }).eq('id', table.id);
+
+    if (error) alert("Error updating table: " + error.message);
   };
 
   const toggleTable = async (id: string) => {
@@ -56,16 +82,21 @@ export default function TableManagement() {
     if (!table) return;
     const isFree = table.status === 'free';
     
-    await supabase.from('app_tables').update({
+    const { error } = await supabase.from('app_tables').update({
       status: isFree ? 'occupied' : 'free',
       type: isFree ? 'Dine-in' : '-',
       bill_amount: isFree ? '₹ 0' : '-',
       occupied_since: isFree ? 'Just Now' : '-'
     }).eq('id', id);
+
+    if (error) alert("Error toggling table: " + error.message);
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from('app_tables').delete().eq('id', id);
+    if (window.confirm("Are you sure you want to delete this table?")) {
+      const { error } = await supabase.from('app_tables').delete().eq('id', id);
+      if (error) alert("Error deleting table: " + error.message);
+    }
   };
 
   const filteredTables = tables.filter(t => filter === 'All' || t.status === filter);
@@ -171,7 +202,7 @@ export default function TableManagement() {
                      <span className="text-xs font-bold text-slate-700">{table.type}</span>
                   </div>
                   <div className="flex gap-2">
-                    <button className="p-2 bg-slate-50 text-slate-400 hover:text-indigo-600 rounded-xl transition-colors">
+                    <button onClick={() => handleEditTable(table)} className="p-2 bg-slate-50 text-slate-400 hover:text-indigo-600 rounded-xl transition-colors">
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button onClick={() => handleDelete(table.id)} className="p-2 bg-slate-50 text-slate-400 hover:text-rose-600 rounded-xl transition-colors">
