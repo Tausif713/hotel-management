@@ -3,7 +3,6 @@ import { supabase } from '../lib/supabase';
 import { 
   Search, 
   User, 
-  History, 
   LayoutGrid, 
   List, 
   RefreshCcw, 
@@ -16,12 +15,11 @@ import {
   CreditCard, 
   Smartphone, 
   FileText,
-  Pause,
   X,
   Flame
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 export default function CounterPanel() {
   const [searchParams] = useSearchParams();
@@ -562,28 +560,6 @@ export default function CounterPanel() {
          </div>
       )}
 
-      {/* Footer Actions */}
-      <div className="px-6 py-4 bg-white border-t border-slate-200 flex items-center justify-between mt-auto">
-        <div className="flex items-center gap-8">
-           <div className="space-y-4">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Quick Actions</p>
-              <div className="flex items-center gap-3">
-                 <button className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-indigo-100 transition-all">
-                    <Plus className="w-3.5 h-3.5" />
-                    New Order
-                 </button>
-                 <button className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-emerald-100 transition-all">
-                    <Pause className="w-3.5 h-3.5" />
-                    Hold Order
-                 </button>
-                 <Link to="/orders" className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-orange-100 transition-all">
-                    <History className="w-3.5 h-3.5" />
-                    History
-                 </Link>
-              </div>
-           </div>
-        </div>
-      </div>
     </div>
   );
 }
