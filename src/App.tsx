@@ -13,12 +13,28 @@ import LiveOrders from './pages/LiveOrders';
 import BillingPage from './pages/BillingPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
+import Login from './pages/Login';
 import Sidebar from './components/Sidebar';
 import { cn } from './lib/utils';
 
 function AppContent() {
   const location = useLocation();
   const isCustomerView = location.pathname.startsWith('/customer');
+  const isLoginView = location.pathname === '/login';
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+
+  // Redirect to login if not authenticated and trying to access admin panel
+  if (!isAuthenticated && !isCustomerView && !isLoginView) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (isLoginView) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+      </Routes>
+    );
+  }
 
   return (
     <div className={cn(

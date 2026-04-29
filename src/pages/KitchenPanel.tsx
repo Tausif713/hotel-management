@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { 
   Clock, 
   CheckCircle2, 
@@ -16,19 +17,46 @@ export default function KitchenPanel() {
   const [orders, setOrders] = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchOrders = () => {
-      const stored = JSON.parse(localStorage.getItem('restaurant_orders') || '[]');
-      setOrders(stored);
+    const fetchOrders = async () => {
+      const { data, error } = await supabase
+        .from('app_orders')
+        .select('*')
+        .neq('status', 'completed')
+        .neq('status', 'cancelled')
+        .order('created_at', { ascending: true });
+        
+      if (data && !error) {
+        const formatted = data.map((o: any) => ({
+          id: o.id.substring(0, 8),
+          dbId: o.id,
+          table: o.table_no,
+          status: o.status,
+          time: new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          items: o.items || []
+        }));
+        setOrders(formatted);
+      } else {
+        const stored = JSON.parse(localStorage.getItem('restaurant_orders') || '[]');
+        setOrders(stored);
+      }
     };
     fetchOrders();
-    const interval = setInterval(fetchOrders, 2000);
+    const interval = setInterval(fetchOrders, 3000);
     return () => clearInterval(interval);
   }, []);
 
-  const moveOrder = (id: string, nextStatus: string) => {
+  const moveOrder = async (id: string, nextStatus: string) => {
+    // Optimistic UI update
     const updated = orders.map(o => o.id === id ? { ...o, status: nextStatus } : o);
     setOrders(updated);
-    localStorage.setItem('restaurant_orders', JSON.stringify(updated));
+    
+    // Find the real DB ID if using Supabase
+    const orderToUpdate = orders.find(o => o.id === id);
+    if (orderToUpdate?.dbId) {
+      await supabase.from('app_orders').update({ status: nextStatus }).eq('id', orderToUpdate.dbId);
+    } else {
+      localStorage.setItem('restaurant_orders', JSON.stringify(updated));
+    }
   };
 
   const columns = [

@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   TableProperties as TableIcon, 
@@ -12,7 +12,8 @@ import {
   Users, 
   BookOpen, 
   BarChart3, 
-  Settings
+  Settings,
+  LogOut
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -34,6 +35,12 @@ const menuItems = [
 
 export default function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    navigate('/login');
+  };
 
   return (
     <aside className="w-[280px] h-screen bg-[#0f172a] text-slate-300 flex flex-col z-50 sticky top-0 overflow-hidden border-r border-white/5">
@@ -82,6 +89,14 @@ export default function Sidebar() {
 
       {/* Footer / QR Section */}
       <div className="p-6 mt-auto">
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-5 py-3.5 mb-6 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group"
+        >
+          <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <span className="text-sm font-semibold tracking-wide">Sign Out</span>
+        </button>
+
         <div className="bg-gradient-to-br from-indigo-600/20 to-purple-600/20 rounded-[2rem] overflow-hidden p-6 relative border border-white/5 shadow-2xl backdrop-blur-xl group">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500" />
           <div className="text-center">

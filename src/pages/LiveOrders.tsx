@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { 
   History, 
   Search, 
@@ -28,12 +29,33 @@ export default function LiveOrders() {
   const [liveOrders, setLiveOrders] = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchOrders = () => {
-      const stored = JSON.parse(localStorage.getItem('restaurant_orders') || '[]');
-      setLiveOrders(stored.filter((o: any) => o.status !== 'completed' && o.status !== 'cancelled'));
+    const fetchOrders = async () => {
+      const { data, error } = await supabase
+        .from('app_orders')
+        .select('*')
+        .neq('status', 'completed')
+        .neq('status', 'cancelled')
+        .order('created_at', { ascending: false });
+        
+      if (data && !error) {
+        const formatted = data.map((o: any) => ({
+          id: o.id.substring(0, 8),
+          table: o.table_no,
+          status: o.status,
+          time: new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          items: o.items || [],
+          amount: o.total_amount
+        }));
+        setLiveOrders(formatted);
+      } else {
+        // Fallback to local storage if Supabase fails or not configured
+        const stored = JSON.parse(localStorage.getItem('restaurant_orders') || '[]');
+        setLiveOrders(stored.filter((o: any) => o.status !== 'completed' && o.status !== 'cancelled'));
+      }
     };
+    
     fetchOrders();
-    const interval = setInterval(fetchOrders, 2000);
+    const interval = setInterval(fetchOrders, 3000);
     return () => clearInterval(interval);
   }, []);
 

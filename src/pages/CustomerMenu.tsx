@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 import { 
   ShoppingBag, 
   Plus, 
@@ -54,19 +55,36 @@ export default function CustomerMenu() {
     (item.name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cart.length === 0) return;
+    
+    const itemsData = cart.map(item => ({ name: item.name, qty: item.qty, note: '', price: item.price }));
+    
+    const { error } = await supabase
+      .from('app_orders')
+      .insert({
+        table_no: id || 'Unknown',
+        status: 'pending',
+        priority: 'normal',
+        items: itemsData,
+        total_amount: total
+      });
+
+    if (error) {
+      alert('Error placing order: ' + error.message);
+      return;
+    }
+    
+    // Also save to local storage as backup/immediate feedback
+    const existingOrders = JSON.parse(localStorage.getItem('restaurant_orders') || '[]');
     const newOrder = {
       id: Math.floor(1000 + Math.random() * 9000).toString(),
       table: id || 'Unknown',
       status: 'pending',
       priority: 'normal',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      items: cart.map(item => ({ name: item.name, qty: item.qty, note: '', price: item.price }))
+      items: itemsData
     };
-    
-    // Save to localStorage for KitchenPanel
-    const existingOrders = JSON.parse(localStorage.getItem('restaurant_orders') || '[]');
     localStorage.setItem('restaurant_orders', JSON.stringify([newOrder, ...existingOrders]));
     
     setCart([]);
