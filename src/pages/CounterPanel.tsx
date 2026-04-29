@@ -65,7 +65,18 @@ export default function CounterPanel() {
              });
           }
         });
-        setBills(activeBills);
+        
+        setBills(currentBills => {
+          const mergedBills = { ...activeBills };
+          Object.keys(currentBills).forEach(tableNo => {
+            const newItems = currentBills[tableNo].filter((i: any) => i.isNew);
+            if (newItems.length > 0) {
+              if (!mergedBills[tableNo]) mergedBills[tableNo] = [];
+              mergedBills[tableNo] = [...mergedBills[tableNo], ...newItems];
+            }
+          });
+          return mergedBills;
+        });
       }
     };
 
@@ -151,20 +162,36 @@ export default function CounterPanel() {
   };
 
   const handleSendKOT = async () => {
-    if (currentBillItems.length === 0) return;
+    const newItems = currentBillItems.filter((item: any) => item.isNew);
+    if (newItems.length === 0) {
+       alert('No new items to send to Kitchen!');
+       return;
+    }
     
-    const itemsData = currentBillItems.map((item: any) => ({ name: item.name, qty: item.qty, note: '', price: item.price }));
+    const itemsData = newItems.map((item: any) => ({ name: item.name, qty: item.qty, note: '', price: item.price }));
+    const newSubTotal = newItems.reduce((acc: number, item: any) => acc + (item.price * item.qty), 0);
+    const newTotal = newSubTotal + Math.round(newSubTotal * 0.05);
     
     const { error } = await supabase.from('app_orders').insert({
-        table_no: selectedTableId,
-        status: 'pending',
-        priority: 'normal',
-        items: itemsData,
-        total_amount: subTotal
+      table_no: selectedTableId,
+      status: 'pending',
+      priority: 'normal',
+      items: itemsData,
+      total_amount: newTotal
     });
     
     if (!error) {
       await supabase.from('app_tables').update({ status: 'occupied', occupied_since: 'Just Now' }).eq('number', selectedTableId);
+      
+      // Update local state to remove isNew flags now that they are sent
+      setBills(currentBills => {
+        const updated = { ...currentBills };
+        if (updated[selectedTableId]) {
+          updated[selectedTableId] = updated[selectedTableId].map((item: any) => ({ ...item, isNew: false }));
+        }
+        return updated;
+      });
+      
       alert('KOT Sent to Kitchen!');
     } else {
       alert('Failed to send KOT: ' + error.message);
@@ -308,7 +335,7 @@ export default function CounterPanel() {
         {/* Middle Col: Current Status */}
         <div className="flex-1 flex flex-col bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-800">Live Status (T{selectedTableId})</h3>
+            <h3 className="text-sm font-bold text-slate-800">Live Status ({selectedTableId})</h3>
             <div className="flex items-center gap-2">
               <RefreshCcw className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
             </div>
@@ -317,7 +344,7 @@ export default function CounterPanel() {
           <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide bg-slate-50/50">
              <div className="bg-white rounded-xl border border-indigo-100 overflow-hidden shadow-sm">
                 <div className="px-4 py-3 bg-indigo-50/50 border-b border-indigo-100 flex justify-between items-center">
-                  <span className="text-xs font-black text-indigo-600">Active Order: T{selectedTableId}</span>
+                  <span className="text-xs font-black text-indigo-600">Active Order: {selectedTableId}</span>
                   <span className="text-[10px] font-bold text-slate-400">Preparation: Normal</span>
                 </div>
                 <div className="p-4 space-y-3">
@@ -362,7 +389,7 @@ export default function CounterPanel() {
         {/* Right Col: Billing */}
         <div className="flex-[1.5] flex flex-col bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-800">Billing (Table T{selectedTableId})</h3>
+            <h3 className="text-sm font-bold text-slate-800">Billing (Table {selectedTableId})</h3>
             <button 
                onClick={() => setShowAddItem(true)}
                className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-sm hover:scale-110 transition-all"
