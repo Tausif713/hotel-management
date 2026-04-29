@@ -53,8 +53,10 @@ export default function LiveOrders() {
     };
     
     fetchOrders();
-    const interval = setInterval(fetchOrders, 3000);
-    return () => clearInterval(interval);
+    const subscription = supabase.channel('live_orders_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_orders' }, fetchOrders)
+      .subscribe();
+    return () => { supabase.removeChannel(subscription); };
   }, []);
 
   return (

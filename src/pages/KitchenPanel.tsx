@@ -41,8 +41,10 @@ export default function KitchenPanel() {
       }
     };
     fetchOrders();
-    const interval = setInterval(fetchOrders, 3000);
-    return () => clearInterval(interval);
+    const subscription = supabase.channel('kitchen_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_orders' }, fetchOrders)
+      .subscribe();
+    return () => { supabase.removeChannel(subscription); };
   }, []);
 
   const moveOrder = async (id: string, nextStatus: string) => {
