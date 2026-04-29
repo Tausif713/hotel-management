@@ -1,19 +1,53 @@
 import { useState } from 'react';
-import { Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, ArrowRight, ShieldCheck, UserPlus, LogIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === 'admin@hotel.com' && password === 'admin') {
-      localStorage.setItem('isAuthenticated', 'true');
-      navigate('/');
-    } else {
-      alert('Invalid credentials! Default is admin@hotel.com / admin');
+    setLoading(true);
+
+    try {
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        
+        if (error) throw error;
+        
+        if (data.user && data.user.identities && data.user.identities.length === 0) {
+          alert('User already exists! Please sign in.');
+          setIsSignUp(false);
+        } else {
+          alert('Account created successfully! You can now sign in.');
+          setIsSignUp(false);
+        }
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (error) throw error;
+        
+        if (data.session) {
+          localStorage.setItem('isAuthenticated', 'true');
+          navigate('/');
+        }
+      }
+    } catch (error: any) {
+      alert(error.message || 'Authentication failed');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -35,12 +69,14 @@ export default function Login() {
 
         {/* Login Card */}
         <div className="bg-white/[0.02] backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-          <div className="mb-8">
-            <h2 className="text-xl font-black text-white">Welcome Back</h2>
-            <p className="text-sm text-slate-400 mt-1">Sign in to access the control panel</p>
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-black text-white">{isSignUp ? 'Create Account' : 'Welcome Back'}</h2>
+              <p className="text-sm text-slate-400 mt-1">{isSignUp ? 'Register to manage your hotel' : 'Sign in to access the control panel'}</p>
+            </div>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleAuth} className="space-y-5">
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Email Address</label>
               <div className="relative group">
@@ -74,16 +110,23 @@ export default function Login() {
             <div className="pt-2">
               <button 
                 type="submit"
-                className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-indigo-500/25 group"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-indigo-500/25 group disabled:opacity-50"
               >
-                Sign In
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                {loading ? 'Processing...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+                {!loading && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
               </button>
             </div>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-xs text-slate-500">Demo Credentials: <span className="text-indigo-400 font-medium">admin@hotel.com</span> / <span className="text-indigo-400 font-medium">admin</span></p>
+            <button 
+              type="button" 
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+            >
+              {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+            </button>
           </div>
         </div>
       </div>
