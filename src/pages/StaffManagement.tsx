@@ -9,7 +9,8 @@ import {
   UserMinus,
   Edit2,
   Trash2,
-  X
+  X,
+  Lock
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -42,7 +43,8 @@ export default function StaffManagement() {
     role: 'Waiter',
     email: '',
     contact: '',
-    image: ''
+    image: '',
+    pin: ''
   });
 
   const handleAddStaff = () => {
@@ -52,7 +54,8 @@ export default function StaffManagement() {
       role: 'Waiter',
       email: '',
       contact: '',
-      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80'
+      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80',
+      pin: ''
     });
     setIsModalOpen(true);
   };
@@ -64,7 +67,8 @@ export default function StaffManagement() {
       role: member.role,
       email: member.email || '',
       contact: member.contact || member.phone || '',
-      image: member.image || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80'
+      image: member.image || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80',
+      pin: member.pin || ''
     });
     setIsModalOpen(true);
   };
@@ -77,6 +81,7 @@ export default function StaffManagement() {
       email: formData.email,
       contact: formData.contact,
       image: formData.image,
+      pin: formData.pin,
       department: 'Service',
       status: editingMember ? editingMember.status : 'Active',
       shift: 'Morning',
@@ -163,6 +168,12 @@ export default function StaffManagement() {
                       <Phone className="w-3.5 h-3.5" />
                       <span className="text-[10px] font-bold">{member.contact || member.phone || 'N/A'}</span>
                    </div>
+                   {member.pin && (
+                     <div className="flex items-center gap-3 text-indigo-500">
+                        <Lock className="w-3.5 h-3.5" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">PIN: {member.pin}</span>
+                     </div>
+                   )}
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 pt-2">
@@ -236,14 +247,27 @@ export default function StaffManagement() {
                     </div>
                  </div>
 
-                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Email Address</label>
-                    <input 
-                      type="email" 
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    />
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Email Address</label>
+                       <input 
+                         type="email" 
+                         className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none"
+                         value={formData.email}
+                         onChange={(e) => setFormData({...formData, email: e.target.value})}
+                       />
+                    </div>
+                    <div className="space-y-1.5">
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Login PIN (4 Digits)</label>
+                       <input 
+                         type="text" 
+                         maxLength={4}
+                         placeholder="e.g. 1234"
+                         className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none"
+                         value={formData.pin}
+                         onChange={(e) => setFormData({...formData, pin: e.target.value})}
+                       />
+                    </div>
                  </div>
 
                  <div className="space-y-1.5">
