@@ -7,7 +7,6 @@ import {
   Phone, 
   UserCheck,
   UserMinus,
-  Edit2
   Edit2,
   Trash2
 } from 'lucide-react';
@@ -17,7 +16,6 @@ const INITIAL_STAFF: any[] = [];
 
 export default function StaffManagement() {
   const [staff, setStaff] = useState<any[]>([]);
-  const [filter, setFilter] = useState('All Staff');
   const [search, setSearch] = useState('');
 
   useEffect(() => {
@@ -117,19 +115,22 @@ export default function StaffManagement() {
                    </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 pt-2">
+                <div className="grid grid-cols-3 gap-2 pt-2">
                    <button 
                       onClick={() => toggleStatus(member.id, member.status)}
                       className={cn(
-                        "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2",
+                        "py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-1",
                         member.status === 'Active' ? "bg-rose-50 text-rose-500 hover:bg-rose-100" : "bg-emerald-50 text-emerald-500 hover:bg-emerald-100"
                       )}
                    >
                       {member.status === 'Active' ? 'Deactivate' : 'Activate'}
                    </button>
-                   <button className="py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2">
+                   <button className="py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-1">
                       <Edit2 className="w-3.5 h-3.5" />
                       Edit
+                   </button>
+                   <button onClick={() => handleDelete(member.id)} className="py-2.5 bg-slate-100 text-rose-500 hover:bg-rose-50 rounded-xl flex items-center justify-center transition-all">
+                      <Trash2 className="w-4 h-4" />
                    </button>
                 </div>
              </div>
