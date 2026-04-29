@@ -6,8 +6,7 @@ import {
   AlertCircle,
   Flame,
   MoreVertical,
-  Timer,
-  Utensils
+  Timer
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -50,7 +49,8 @@ export default function KitchenPanel() {
     const orderToUpdate = orders.find(o => o.id === id);
     if (!orderToUpdate) return;
 
-    const realNextStatus = nextStatus === 'served' ? 'completed' : nextStatus;
+    // Kitchen only goes up to 'ready'
+    const realNextStatus = nextStatus;
 
     // Optimistic UI update
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status: realNextStatus } : o));
@@ -59,7 +59,6 @@ export default function KitchenPanel() {
       const { error } = await supabase.from('app_orders').update({ status: realNextStatus }).eq('id', orderToUpdate.dbId);
       if (error) {
         alert("Error updating order status: " + error.message);
-        // Rollback (simplified)
         fetchOrders();
       }
     }
@@ -174,13 +173,10 @@ export default function KitchenPanel() {
                              </button>
                            )}
                            {col.status === 'ready' && (
-                             <button 
-                               onClick={() => moveOrder(order.id, 'served')}
-                               className="w-full text-center py-3 text-emerald-600 text-[10px] font-black uppercase tracking-[0.2em] bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
-                             >
-                               <Utensils className="w-4 h-4" />
-                               Waiting for Service
-                             </button>
+                             <div className="w-full text-center py-3 text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-center gap-2">
+                               <Clock className="w-4 h-4" />
+                               Waiting for Waiter
+                             </div>
                            )}
                         </div>
                      </div>

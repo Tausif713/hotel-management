@@ -151,12 +151,45 @@ export default function CounterPanel() {
   };
 
   const handleGenerateBill = async () => {
-    alert(`Bill Generated for ${selectedTableId}! Total: ₹${total}`);
-    setBills({ ...bills, [selectedTableId]: [] });
-    await supabase.from('app_tables').update({ status: 'free', bill_amount: '-', occupied_since: '-' }).eq('number', selectedTableId);
+    if (currentBillItems.length === 0) return;
+
+    const invoiceData = {
+      table_no: selectedTableId,
+      items: currentBillItems.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
+      subtotal: subTotal,
+      tax: tax,
+      total_amount: total,
+      payment_method: 'Cash', // Default
+      status: 'Paid',
+      created_at: new Date().toISOString()
+    };
+
+    // 1. Create Invoice
+    const { error: invError } = await supabase.from('app_invoices').insert(invoiceData);
+    if (invError) {
+      alert("Error creating invoice: " + invError.message);
+      return;
+    }
+
+    // 2. Mark all active orders for this table as completed
+    await supabase.from('app_orders')
+      .update({ status: 'completed' })
+      .eq('table_no', selectedTableId)
+      .in('status', ['pending', 'cooking', 'ready', 'served']);
+
+    // 3. Free the table
+    await supabase.from('app_tables')
+      .update({ status: 'free', bill_amount: '-', occupied_since: '-' })
+      .eq('number', selectedTableId);
+
+    alert(`Success! Bill Generated for Table ${selectedTableId}. Total: ₹${total}`);
     
-    // Mark active orders for this table as completed
-    await supabase.from('app_orders').update({ status: 'completed' }).eq('table_no', selectedTableId).in('status', ['pending', 'cooking', 'ready', 'served']);
+    // Clear local state
+    setBills(prev => {
+      const updated = { ...prev };
+      delete updated[selectedTableId];
+      return updated;
+    });
   };
 
   const handleSendKOT = async () => {
