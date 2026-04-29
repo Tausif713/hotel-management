@@ -25,33 +25,60 @@ import { Link, useSearchParams } from 'react-router-dom';
 
 export default function CounterPanel() {
   const [searchParams] = useSearchParams();
+  const initialTable = searchParams.get('table');
+  const [selectedTableId, setSelectedTableId] = useState<string>(initialTable || 'T01');
   const [activeView, setActiveView] = useState<'table' | 'order'>('table');
-  const [selectedTableId, setSelectedTableId] = useState(searchParams.get('table') || 'T01');
   const [tables, setTables] = useState<any[]>([]);
   const [menuItems, setMenuItems] = useState<any[]>([]);
-  const [bills, setBills] = useState<Record<string, any>>({});
+  const [bills, setBills] = useState<Record<string, any[]>>({});
   const [showAddItem, setShowAddItem] = useState(false);
   const [searchMenu, setSearchMenu] = useState('');
 
   useEffect(() => {
-    const fetchAll = async () => {
+    const fetchTablesAndMenu = async () => {
       const [tablesRes, menuRes] = await Promise.all([
         supabase.from('app_tables').select('*').order('number', { ascending: true }),
         supabase.from('app_menu').select('*')
       ]);
       
-      if (tablesRes.data && tablesRes.data.length > 0) {
-        setTables(tablesRes.data);
-        if (!selectedTableId) setSelectedTableId(tablesRes.data[0].number);
-      }
-      if (menuRes.data) setMenuItems(menuRes.data);
+      if (tablesRes.data) setTables(tablesRes.data);
+      if (menuRes.data) setMenuItems(menuRes.data.map(item => ({
+        id: item.id, name: item.name, price: item.price, category: item.category, 
+        image: item.image, spicy: item.spicy, isVeg: item.is_veg
+      })));
     };
-    fetchAll();
+    
+    const fetchActiveOrders = async () => {
+      const { data } = await supabase.from('app_orders').select('*').in('status', ['pending', 'cooking', 'ready']);
+      if (data) {
+        const activeBills: Record<string, any[]> = {};
+        data.forEach(order => {
+          if (!activeBills[order.table_no]) activeBills[order.table_no] = [];
+          if (Array.isArray(order.items)) {
+             order.items.forEach((item: any) => {
+               const existing = activeBills[order.table_no].find(i => i.name === item.name);
+               if (existing) {
+                 existing.qty += item.qty;
+               } else {
+                 activeBills[order.table_no].push({ ...item, id: Math.random().toString() });
+               }
+             });
+          }
+        });
+        setBills(activeBills);
+      }
+    };
+
+    fetchTablesAndMenu();
+    fetchActiveOrders();
+
     const subscription = supabase.channel('counter_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_tables' }, fetchAll)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_tables' }, fetchTablesAndMenu)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_orders' }, fetchActiveOrders)
       .subscribe();
+      
     return () => { supabase.removeChannel(subscription); };
-  }, [selectedTableId]);
+  }, []);
 
   const currentBillItems = bills[selectedTableId] || [];
   const subTotal = currentBillItems.reduce((acc: number, item: any) => acc + (item.price * item.qty), 0);
@@ -110,6 +137,9 @@ export default function CounterPanel() {
     alert(`Bill Generated for ${selectedTableId}! Total: ₹${total}`);
     setBills({ ...bills, [selectedTableId]: [] });
     await supabase.from('app_tables').update({ status: 'free', bill_amount: '-', occupied_since: '-' }).eq('number', selectedTableId);
+    
+    // Mark active orders for this table as completed
+    await supabase.from('app_orders').update({ status: 'completed' }).eq('table_no', selectedTableId).in('status', ['pending', 'cooking', 'ready']);
   };
 
   const handleSendKOT = async () => {
