@@ -386,112 +386,112 @@ export default function CounterPanel() {
           </div>
         </div>
 
-        {/* Right Col: Billing */}
-        <div className="flex-[1.5] flex flex-col bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-800">Billing (Table {selectedTableId})</h3>
-            <button 
-               onClick={() => setShowAddItem(true)}
-               className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-sm hover:scale-110 transition-all"
-            >
-               <Plus className="w-4 h-4" />
-            </button>
+        {/* Right Col: Billing - POS Style Receipt */}
+        <div className="flex-[1.5] flex flex-col bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-2xl relative">
+          <div className="p-8 border-b border-dashed border-slate-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-black text-slate-900 tracking-tight">Table {selectedTableId}</h3>
+                <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">Order Details</p>
+              </div>
+              <button 
+                 onClick={() => setShowAddItem(true)}
+                 className="bg-slate-900 text-white p-3 rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all"
+              >
+                 <Plus className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 scrollbar-hide">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] border-b border-slate-100">
-                  <th className="pb-3 pr-2">Item</th>
-                  <th className="pb-3 text-center">Qty</th>
-                  <th className="pb-3 text-right">Price</th>
-                  <th className="pb-3 text-right">Amount</th>
-                  <th className="pb-3 pl-4"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
+          <div className="flex-1 overflow-y-auto px-8 py-6 scrollbar-hide">
+            {currentBillItems.length > 0 ? (
+              <div className="space-y-6">
                 {currentBillItems.map((item: any, i: number) => (
-                  <tr key={i} className="group">
-                    <td className="py-4 flex items-center gap-2">
-                      <p className="text-xs font-bold text-slate-800 leading-tight">{item.name}</p>
-                      {item.isNew && <span className="text-[8px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded font-black uppercase">NEW</span>}
-                    </td>
-                    <td className="py-4">
-                      <div className="flex items-center justify-center gap-2 bg-slate-50 border border-slate-200 p-1 rounded-lg scale-90">
+                  <div key={i} className="flex items-center justify-between group animate-in slide-in-from-right duration-300" style={{ animationDelay: `${i * 50}ms` }}>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-black text-slate-800">{item.name}</p>
+                        {item.isNew && <span className="text-[8px] bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">NEW</span>}
+                      </div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">₹{item.price} x {item.qty}</p>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3 bg-slate-50 p-1.5 rounded-xl border border-slate-100">
                         <button 
                            onClick={() => handleUpdateQty(item.name, -1, item.isNew)}
-                           className="w-6 h-6 flex items-center justify-center text-slate-400 hover:bg-white rounded hover:text-indigo-600 transition-all"
+                           className="w-7 h-7 flex items-center justify-center text-slate-400 hover:bg-white rounded-lg hover:text-rose-500 hover:shadow-sm transition-all"
                         >
                            <Minus className="w-3 h-3" />
                         </button>
-                        <span className="text-xs font-black min-w-[15px] text-center">{item.qty}</span>
+                        <span className="text-sm font-black min-w-[20px] text-center text-slate-900">{item.qty}</span>
                         <button 
                            onClick={() => handleUpdateQty(item.name, 1, item.isNew)}
-                           className="w-6 h-6 flex items-center justify-center text-indigo-600 hover:bg-white rounded transition-all"
+                           className="w-7 h-7 flex items-center justify-center text-indigo-600 hover:bg-white rounded-lg hover:shadow-sm transition-all"
                         >
                            <Plus className="w-3 h-3" />
                         </button>
                       </div>
-                    </td>
-                    <td className="py-4 text-right text-xs font-bold text-slate-400 font-mono">₹ {item.price}</td>
-                    <td className="py-4 text-right text-xs font-black text-slate-800 font-mono">₹ {item.price * item.qty}</td>
-                    <td className="py-4 px-4 text-right">
+                      
+                      <div className="w-20 text-right">
+                        <p className="text-sm font-black text-slate-900 font-mono">₹{item.price * item.qty}</p>
+                      </div>
+                      
                       <button 
                          onClick={() => handleRemoveItem(item.name, item.isNew)}
-                         className="text-rose-400 hover:text-rose-600 p-1 opacity-0 group-hover:opacity-100 transition-all"
+                         className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
                       >
                          <Trash2 className="w-4 h-4" />
                       </button>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-
-            {currentBillItems.length === 0 && (
-               <div className="mt-20 flex flex-col items-center justify-center opacity-40">
-                  <FileText className="w-12 h-12 text-slate-300 mb-4" />
-                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">No Items in Bill</p>
+              </div>
+            ) : (
+               <div className="h-full flex flex-col items-center justify-center py-20 opacity-20">
+                  <FileText className="w-16 h-16 text-slate-300 mb-4 stroke-1" />
+                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">No Items Added Yet</p>
                </div>
             )}
           </div>
 
-          <div className="p-6 bg-slate-50/50 border-t border-slate-100 space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs font-black text-slate-500 uppercase tracking-wider">
+          <div className="p-8 bg-slate-50/80 backdrop-blur-md border-t border-dashed border-slate-200">
+            <div className="space-y-4 mb-8">
+              <div className="flex items-center justify-between text-[11px] font-black text-slate-400 uppercase tracking-widest">
                 <span>Sub Total</span>
-                <span className="text-slate-800">₹ {subTotal}</span>
+                <span className="text-slate-900">₹ {subTotal}</span>
               </div>
-              <div className="flex items-center justify-between text-xs font-black text-slate-500 uppercase tracking-wider">
-                <span>Tax (5%)</span>
-                <span className="text-slate-800">₹ {tax}</span>
+              <div className="flex items-center justify-between text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                <span>Tax (GST 5%)</span>
+                <span className="text-slate-900">₹ {tax}</span>
+              </div>
+              <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
+                <span className="text-lg font-black text-slate-900 uppercase tracking-tighter">Total Amount</span>
+                <span className="text-3xl font-black text-slate-900 tracking-tighter">₹ {total}</span>
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-slate-200">
-              <span className="text-sm font-black text-slate-900 uppercase">Total Amount</span>
-              <span className="text-2xl font-black text-slate-900">₹ {total}</span>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3">
+            <div className="space-y-4">
                <button 
                   onClick={handleGenerateBill}
                   disabled={currentBillItems.length === 0}
                   className={cn(
-                     "w-full py-4 rounded-[1.25rem] font-black text-sm uppercase tracking-[0.2em] transition-all shadow-xl flex items-center justify-center gap-3",
-                     currentBillItems.length > 0 ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-100" : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                     "w-full py-5 rounded-3xl font-black text-sm uppercase tracking-[0.2em] transition-all shadow-2xl flex items-center justify-center gap-4 group/btn",
+                     currentBillItems.length > 0 
+                      ? "bg-[#10b981] hover:bg-[#059669] text-white shadow-emerald-200/50 hover:-translate-y-1 active:translate-y-0" 
+                      : "bg-slate-200 text-slate-400 cursor-not-allowed"
                   )}
                >
-                  <Printer className="w-5 h-5" />
+                  <Printer className="w-6 h-6 group-hover/btn:rotate-12 transition-transform" />
                   GENERATE BILL
                </button>
 
-               <div className="grid grid-cols-2 gap-3 mt-4">
-                  <button onClick={handleSendKOT} className="py-3 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-xl font-bold text-xs hover:bg-indigo-100 transition-all flex items-center justify-center gap-2">
+               <div className="grid grid-cols-2 gap-4">
+                  <button onClick={handleSendKOT} className="py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-100">
                     <Flame className="w-4 h-4" />
                     SEND KOT
                   </button>
-                  <button onClick={() => alert('Opening WhatsApp to share bill...')} className="py-3 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-100 transition-all flex items-center justify-center gap-2">
+                  <button onClick={() => alert('Opening WhatsApp to share bill...')} className="py-4 bg-white border-2 border-slate-100 text-slate-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
                     <Share2 className="w-4 h-4" />
                     SHARE BILL
                   </button>
@@ -499,6 +499,7 @@ export default function CounterPanel() {
             </div>
           </div>
         </div>
+
       </div>
 
       {/* Add Item Modal */}
