@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Search, 
   Filter, 
@@ -14,6 +14,17 @@ const ORDERS: any[] = [];
 
 export default function AllOrders() {
   const [activeFilter, setActiveFilter] = useState('All Orders');
+  const [ORDERS, setOrders] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchOrders = () => {
+      const stored = JSON.parse(localStorage.getItem('restaurant_orders') || '[]');
+      setOrders(stored);
+    };
+    fetchOrders();
+    const interval = setInterval(fetchOrders, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -99,7 +110,7 @@ export default function AllOrders() {
                       {order.type}
                     </span>
                   </td>
-                  <td className="px-8 py-6 text-sm font-black text-slate-900">{order.amount}</td>
+                  <td className="px-8 py-6 text-sm font-black text-slate-900">₹{order.items?.reduce((sum: number, i: any) => sum + (i.qty * (i.price || 0)), 0)}</td>
                   <td className="px-8 py-6">
                     <span className={cn(
                       "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border",

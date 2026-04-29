@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   History, 
   Search, 
@@ -25,6 +25,17 @@ const statusStyles: any = {
 
 export default function LiveOrders() {
   const [activeFilter, setActiveFilter] = useState('All Orders');
+  const [liveOrders, setLiveOrders] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchOrders = () => {
+      const stored = JSON.parse(localStorage.getItem('restaurant_orders') || '[]');
+      setLiveOrders(stored.filter((o: any) => o.status !== 'completed' && o.status !== 'cancelled'));
+    };
+    fetchOrders();
+    const interval = setInterval(fetchOrders, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -130,10 +141,10 @@ export default function LiveOrders() {
                     </div>
                   </td>
                   <td className="px-8 py-6">
-                    <span className="bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider">{order.items} Items</span>
+                    <span className="bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider">{order.items?.length || 0} Items</span>
                   </td>
                   <td className="px-8 py-6">
-                    <span className="text-sm font-black text-slate-900">{order.amount}</span>
+                    <span className="text-sm font-black text-slate-900">₹{order.items?.reduce((sum: number, i: any) => sum + (i.qty * (i.price || 0)), 0)}</span>
                   </td>
                   <td className="px-8 py-6">
                     <span className={cn(

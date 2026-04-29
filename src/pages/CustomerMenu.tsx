@@ -62,7 +62,7 @@ export default function CustomerMenu() {
       status: 'pending',
       priority: 'normal',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      items: cart.map(item => ({ name: item.name, qty: item.qty, note: '' }))
+      items: cart.map(item => ({ name: item.name, qty: item.qty, note: '', price: item.price }))
     };
     
     // Save to localStorage for KitchenPanel

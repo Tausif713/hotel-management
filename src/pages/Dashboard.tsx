@@ -19,6 +19,7 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 import { cn } from '../lib/utils';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const chartData: any[] = [];
@@ -60,6 +61,21 @@ const tableStats: any[] = [];
 const staffOverview: any[] = [];
 
 export default function Dashboard() {
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [stats, setStats] = useState({ sales: 0, orders: 0 });
+
+  useEffect(() => {
+    const fetchOrders = () => {
+      const stored = JSON.parse(localStorage.getItem('restaurant_orders') || '[]');
+      setRecentOrders(stored.slice(0, 5));
+      const totalSales = stored.reduce((sum: number, o: any) => sum + (o.items?.reduce((s: number, i: any) => s + (i.qty * (i.price || 0)), 0) || 0), 0);
+      setStats({ sales: totalSales, orders: stored.length });
+    };
+    fetchOrders();
+    const interval = setInterval(fetchOrders, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header */}
@@ -106,7 +122,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
           label="Total Sales" 
-          value="₹ 45,680" 
+          value={`₹ ${stats.sales}`}
           trend="+12.5%" 
           trendColor="text-emerald-500"
           subtext="from yesterday"
@@ -115,7 +131,7 @@ export default function Dashboard() {
         />
         <StatCard 
           label="Total Orders" 
-          value="128" 
+          value={stats.orders.toString()} 
           trend="+8.3%" 
           trendColor="text-emerald-500"
           subtext="from yesterday"
@@ -131,7 +147,7 @@ export default function Dashboard() {
         />
         <StatCard 
           label="Total Bills" 
-          value="112" 
+          value={stats.orders.toString()} 
           trend="+10.2%" 
           trendColor="text-emerald-500"
           subtext="from yesterday"
@@ -234,15 +250,18 @@ export default function Dashboard() {
                   <div>
                     <div className="flex items-center gap-2">
                        <p className="text-sm font-bold text-slate-900">Order {order.id}</p>
-                       <span className={cn("px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider", order.statusColor)}>
+                       <span className={cn(
+                         "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider",
+                         order.status === 'completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'
+                       )}>
                          {order.status}
                        </span>
                     </div>
-                    <p className="text-[10px] text-slate-400 font-bold">{order.table}</p>
+                    <p className="text-[10px] text-slate-400 font-bold">Table {order.table}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                   <p className="text-sm font-black text-slate-900">{order.amount}</p>
+                   <p className="text-sm font-black text-slate-900">₹{order.items?.reduce((sum: number, i: any) => sum + (i.qty * (i.price || 0)), 0)}</p>
                    <p className="text-[10px] text-slate-400 font-bold">{order.time}</p>
                 </div>
               </div>
