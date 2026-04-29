@@ -5,10 +5,8 @@ import {
   Search, 
   Filter, 
   Printer, 
-  Share2, 
   Banknote,
-  MoreVertical,
-  ChevronRight
+  MoreVertical
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Link } from 'react-router-dom';
@@ -70,7 +68,7 @@ export default function BillingPage() {
 
       {/* Main Content Area */}
       <div className="grid grid-cols-12 gap-8">
-        <div className="col-span-12 lg:col-span-8 space-y-6">
+        <div className="col-span-12 space-y-6">
            <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
              <div className="p-6 border-b border-slate-50 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -148,78 +146,6 @@ export default function BillingPage() {
                  </tbody>
                </table>
              </div>
-           </div>
-        </div>
-
-        {/* Payment Processing Sidebar */}
-        <div className="col-span-12 lg:col-span-4 space-y-6">
-           <div className="bg-[#0f172a] rounded-[2rem] p-8 text-white relative overflow-hidden group">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500" />
-              <div className="flex items-center gap-4 mb-8">
-                 <div className="w-12 h-12 bg-indigo-500 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                    <Receipt className="w-6 h-6" />
-                 </div>
-                 <div>
-                    <h3 className="text-lg font-black">Quick Pay</h3>
-                    <p className="text-xs text-slate-400 font-medium">Fast check-out for tables</p>
-                 </div>
-              </div>
-
-              <div className="space-y-4 mb-8">
-                 {Array.from(new Set(invoices.filter(i => i.status !== 'completed' && i.status !== 'cancelled').map(i => i.table_no))).map((tableNo) => (
-                  <Link to={`/counter?table=${tableNo}`} key={tableNo} className="block bg-white/5 rounded-2xl p-4 border border-white/5 hover:bg-white/10 transition-all cursor-pointer group/item">
-                    <div className="flex items-center justify-between">
-                       <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-indigo-600/50 flex items-center justify-center font-black">{tableNo.replace('T', '')}</div>
-                          <div>
-                             <p className="text-sm font-black">Table {tableNo}</p>
-                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Active Bill</p>
-                          </div>
-                       </div>
-                       <ChevronRight className="w-5 h-5 text-slate-500 group-hover/item:translate-x-1 transition-transform" />
-                    </div>
-                  </Link>
-                 ))}
-                 {invoices.filter(i => i.status !== 'completed' && i.status !== 'cancelled').length === 0 && (
-                   <div className="text-center py-6">
-                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">No Active Bills</p>
-                   </div>
-                 )}
-              </div>
-
-              <div className="space-y-4">
-                 <button className="w-full py-4 bg-indigo-600 text-white rounded-[1.25rem] font-black text-sm uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-900/40">
-                    GENERATE TOTAL REPORT
-                 </button>
-                 <div className="grid grid-cols-2 gap-4">
-                    <button className="py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white/10">
-                       <Share2 className="w-4 h-4" /> E-RECEIPT
-                    </button>
-                    <button className="py-3 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white/10">
-                       <Printer className="w-4 h-4" /> BATCH PRINT
-                    </button>
-                 </div>
-              </div>
-           </div>
-
-           <div className="bg-white rounded-[2rem] border border-slate-100 p-8 shadow-sm">
-              <h3 className="text-lg font-black text-slate-900 mb-6">Tax Summary</h3>
-              <div className="space-y-4">
-                 {[
-                   { label: 'SGST (2.5%)', value: '₹ 1,142' },
-                   { label: 'CGST (2.5%)', value: '₹ 1,142' },
-                   { label: 'Service Charge', value: '₹ 560' },
-                 ].map((item, i) => (
-                   <div key={i} className="flex justify-between items-center py-3 border-b border-slate-50 last:border-0">
-                      <span className="text-xs font-black text-slate-400 capitalize">{item.label}</span>
-                      <span className="text-sm font-black text-slate-900">{item.value}</span>
-                   </div>
-                 ))}
-                 <div className="pt-4 flex justify-between items-center bg-indigo-50/50 p-4 rounded-2xl mt-4">
-                    <span className="text-xs font-black text-indigo-600 uppercase tracking-widest font-mono">Total Tax Today</span>
-                    <span className="text-xl font-black text-indigo-700 font-mono">₹ 2,844</span>
-                 </div>
-              </div>
            </div>
         </div>
       </div>
