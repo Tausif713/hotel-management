@@ -55,7 +55,7 @@ export default function BillingPage() {
           { label: 'Pending Amount', value: `₹ ${invoices.filter(i => i.status !== 'completed').reduce((sum, i) => sum + (i.total_amount || 0), 0)}`, trend: 'Active', color: 'from-orange-600 to-amber-600' },
           { label: 'Refunds', value: '₹ 0', trend: 'N/A', color: 'from-rose-600 to-pink-600' },
         ].map((card, i) => (
-          <div key={i} className={cn("p-6 rounded-[2rem] text-white relative overflow-hidden group shadow-lg", card.color)}>
+          <div key={i} className={cn("p-6 rounded-[2rem] text-white relative overflow-hidden group shadow-lg bg-gradient-to-br", card.color)}>
              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-110 transition-transform duration-700" />
              <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2 relative z-10">{card.label}</p>
              <h3 className="text-3xl font-black relative z-10">{card.value}</h3>
