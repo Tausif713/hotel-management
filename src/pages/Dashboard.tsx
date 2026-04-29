@@ -7,7 +7,10 @@ import {
   Users,
   Receipt,
   Calendar,
-  LayoutGrid
+  LayoutGrid,
+  ChefHat,
+  Calculator,
+  BookOpen
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -176,6 +179,31 @@ export default function Dashboard() {
           icon={Receipt} 
           colorClass="bg-orange-100 text-orange-600" 
         />
+      </div>
+
+      {/* Admin Quick Access Panels */}
+      <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-black text-slate-900 tracking-tight">Master Control Panels</h3>
+          <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest">Admin Access</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {[
+            { label: 'Kitchen', path: '/kitchen', icon: ChefHat, color: 'bg-rose-50 text-rose-500' },
+            { label: 'Counter', path: '/counter', icon: Calculator, color: 'bg-indigo-50 text-indigo-500' },
+            { label: 'Orders', path: '/orders-live', icon: ShoppingCart, color: 'bg-emerald-50 text-emerald-500' },
+            { label: 'Billing', path: '/billing', icon: Receipt, color: 'bg-orange-50 text-orange-500' },
+            { label: 'Staff', path: '/staff', icon: Users, color: 'bg-blue-50 text-blue-500' },
+            { label: 'Menu', path: '/menu', icon: BookOpen, color: 'bg-purple-50 text-purple-500' },
+          ].map((panel, i) => (
+            <Link key={i} to={panel.path} className="flex flex-col items-center justify-center p-6 rounded-3xl border border-slate-50 hover:border-indigo-100 hover:bg-slate-50 transition-all group active:scale-95">
+              <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform", panel.color)}>
+                <panel.icon className="w-6 h-6" />
+              </div>
+              <span className="text-xs font-black text-slate-700 uppercase tracking-widest">{panel.label}</span>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Main Content Grid */}
