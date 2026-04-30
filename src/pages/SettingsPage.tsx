@@ -61,6 +61,26 @@ interface AppSettings {
   logo_url?: string;
 }
 
+const DEFAULT_SETTINGS: AppSettings = {
+  id: 'default',
+  restaurant_name: 'Grand Hotel',
+  tagline: 'Premium Dining Experience',
+  email: 'admin@grandhotel.com',
+  phone: '+91 98765 43210',
+  address: '123 Luxury Avenue, Food City',
+  currency: '₹',
+  tax_percent: 5.0,
+  invoice_prefix: 'INV-',
+  auto_print: false,
+  notifications_enabled: true,
+  order_alerts: true,
+  stock_alerts: false,
+  theme: 'light',
+  compact_mode: false,
+  admin_pin: '1234',
+  logo_url: ''
+};
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
   const [isLoading, setIsLoading] = useState(false);
@@ -93,36 +113,19 @@ export default function SettingsPage() {
         .single();
       
       if (settingsError && settingsError.code === 'PGRST116') {
-        // No settings found, create default one
-        const defaultSettings = {
-          restaurant_name: 'Grand Hotel',
-          tagline: 'Premium Dining Experience',
-          email: 'admin@grandhotel.com',
-          phone: '+91 98765 43210',
-          address: '123 Luxury Avenue, Food City',
-          currency: '₹',
-          tax_percent: 5.0,
-          invoice_prefix: 'INV-',
-          auto_print: false,
-          notifications_enabled: true,
-          order_alerts: true,
-          stock_alerts: false,
-          theme: 'light',
-          compact_mode: false,
-          admin_pin: '1234',
-          logo_url: ''
-        };
-        
-        const { data: newData, error: insertError } = await supabase
+        // No settings found, create default one in DB
+        const { data: newData } = await supabase
           .from('app_settings')
-          .insert([defaultSettings])
+          .insert([DEFAULT_SETTINGS])
           .select()
           .single();
           
-        if (newData) setSettings(newData);
-        if (insertError) console.error('Error creating default settings:', insertError);
+        setSettings(newData || DEFAULT_SETTINGS);
       } else if (settingsData) {
         setSettings(settingsData);
+      } else {
+        // Fallback for any other error/empty data
+        setSettings(DEFAULT_SETTINGS);
       }
 
       // Fetch Printers
@@ -133,6 +136,7 @@ export default function SettingsPage() {
       if (printersData) setPrinters(printersData);
     } catch (error) {
       console.error('Error fetching data:', error);
+      setSettings(DEFAULT_SETTINGS);
     } finally {
       setIsLoading(false);
     }

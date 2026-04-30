@@ -115,7 +115,7 @@ export default function QRCodePage() {
                 <div className="absolute inset-0 bg-indigo-500/10 blur-3xl rounded-full group-hover:bg-indigo-500/20 transition-all duration-500" />
                 <div className="relative bg-white p-12 rounded-[2.5rem] border-4 border-slate-900 shadow-2xl transition-transform duration-500 group-hover:scale-105">
                    <img 
-                     src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent('https://hotel-management-yam3.vercel.app/customer/table/' + selectedTable)}`}
+                     src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(window.location.origin + '/customer/table/' + selectedTable)}`}
                      alt={`QR Code for ${selectedTable}`} 
                      className="w-48 h-48 rounded-xl mix-blend-multiply" 
                    />
@@ -149,10 +149,13 @@ export default function QRCodePage() {
                     <Download className="w-5 h-5" />
                     DOWNLOAD PNG
                  </button>
-                 <button className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-3 shadow-lg shadow-slate-200">
+                  <button 
+                    onClick={() => window.open(window.location.origin + '/customer/table/' + selectedTable, '_blank')}
+                    className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-3 shadow-lg shadow-slate-200"
+                  >
                     <ExternalLink className="w-5 h-5" />
                     LIVE PREVIEW
-                 </button>
+                  </button>
               </div>
            </div>
 
