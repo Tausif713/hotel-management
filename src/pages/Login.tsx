@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Lock, Mail, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { Logo } from '../components/Logo';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -10,6 +11,24 @@ export default function Login() {
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [hotelSettings, setHotelSettings] = useState<{ name: string; logo: string }>({
+    name: 'GrandHotel',
+    logo: ''
+  });
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    const { data } = await supabase.from('app_settings').select('restaurant_name, logo_url').single();
+    if (data) {
+      setHotelSettings({
+        name: data.restaurant_name,
+        logo: data.logo_url || ''
+      });
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,10 +97,14 @@ export default function Login() {
       <div className="relative w-full max-w-md">
         {/* Logo/Brand */}
         <div className="text-center mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-2xl shadow-indigo-500/30 border border-white/10">
-            <ShieldCheck className="w-8 h-8 text-white" />
+          <div className="w-20 h-20 bg-white/5 backdrop-blur-md rounded-3xl mx-auto flex items-center justify-center mb-4 shadow-2xl border border-white/10 overflow-hidden group hover:scale-110 transition-transform duration-500">
+            {hotelSettings.logo ? (
+              <img src={hotelSettings.logo} alt={hotelSettings.name} className="w-full h-full object-cover" />
+            ) : (
+              <Logo className="w-full h-full p-2" />
+            )}
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tighter">GrandHotel</h1>
+          <h1 className="text-3xl font-black text-white tracking-tighter">{hotelSettings.name}</h1>
           <p className="text-indigo-200 text-sm font-medium mt-1 uppercase tracking-widest">Management Suite</p>
         </div>
 

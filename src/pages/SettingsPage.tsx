@@ -58,6 +58,7 @@ interface AppSettings {
   theme: 'light' | 'dark';
   compact_mode: boolean;
   admin_pin: string;
+  logo_url?: string;
 }
 
 export default function SettingsPage() {
@@ -84,19 +85,57 @@ export default function SettingsPage() {
 
   const fetchData = async () => {
     setIsLoading(true);
-    
-    // Fetch Settings
-    const { data: settingsData } = await supabase.from('app_settings').select('*').single();
-    if (settingsData) setSettings(settingsData);
+    try {
+      // Fetch Settings
+      const { data: settingsData, error: settingsError } = await supabase
+        .from('app_settings')
+        .select('*')
+        .single();
+      
+      if (settingsError && settingsError.code === 'PGRST116') {
+        // No settings found, create default one
+        const defaultSettings = {
+          restaurant_name: 'Grand Hotel',
+          tagline: 'Premium Dining Experience',
+          email: 'admin@grandhotel.com',
+          phone: '+91 98765 43210',
+          address: '123 Luxury Avenue, Food City',
+          currency: '₹',
+          tax_percent: 5.0,
+          invoice_prefix: 'INV-',
+          auto_print: false,
+          notifications_enabled: true,
+          order_alerts: true,
+          stock_alerts: false,
+          theme: 'light',
+          compact_mode: false,
+          admin_pin: '1234',
+          logo_url: ''
+        };
+        
+        const { data: newData, error: insertError } = await supabase
+          .from('app_settings')
+          .insert([defaultSettings])
+          .select()
+          .single();
+          
+        if (newData) setSettings(newData);
+        if (insertError) console.error('Error creating default settings:', insertError);
+      } else if (settingsData) {
+        setSettings(settingsData);
+      }
 
-    // Fetch Printers
-    const { data: printersData } = await supabase
-      .from('app_printers')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (printersData) setPrinters(printersData);
-    
-    setIsLoading(false);
+      // Fetch Printers
+      const { data: printersData } = await supabase
+        .from('app_printers')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (printersData) setPrinters(printersData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSaveSettings = async () => {
@@ -119,6 +158,21 @@ export default function SettingsPage() {
   const updateSetting = (key: keyof AppSettings, value: any) => {
     if (!settings) return;
     setSettings({ ...settings, [key]: value });
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        updateSetting('logo_url', reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeLogo = () => {
+    updateSetting('logo_url', '');
   };
 
   const handleAddPrinter = async () => {
@@ -235,17 +289,33 @@ export default function SettingsPage() {
               {activeTab === 'general' && (
                 <div className="animate-in fade-in slide-in-from-right-4 duration-500">
                   <div className="flex items-center gap-6 mb-12">
-                     <div className="w-24 h-24 bg-slate-50 rounded-3xl border-4 border-slate-50 flex items-center justify-center relative group cursor-pointer overflow-hidden shadow-inner">
-                        <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                           <ImageIcon className="w-8 h-8 text-white" />
+                     <div className="relative group">
+                        <div className="w-32 h-32 bg-slate-50 rounded-[2.5rem] border-4 border-white flex items-center justify-center relative overflow-hidden shadow-2xl shadow-slate-200/50 group cursor-pointer transition-all hover:scale-105 active:scale-95">
+                           {settings.logo_url ? (
+                              <img src={settings.logo_url} alt="Hotel Logo" className="w-full h-full object-cover" />
+                           ) : (
+                              <div className="w-24 h-24 bg-amber-400 rounded-3xl flex items-center justify-center shadow-lg shadow-amber-400/20">
+                                 <Settings className="w-10 h-10 text-slate-900" />
+                              </div>
+                           )}
+                           <label className="absolute inset-0 bg-slate-900/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                              <ImageIcon className="w-8 h-8 text-white mb-2" />
+                              <span className="text-[10px] text-white font-black uppercase tracking-widest">Change Logo</span>
+                              <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                           </label>
                         </div>
-                        <div className="w-20 h-20 bg-amber-400 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-400/20">
-                          <Settings className="w-10 h-10 text-slate-900" />
-                        </div>
+                        {settings.logo_url && (
+                           <button 
+                              onClick={removeLogo}
+                              className="absolute -top-2 -right-2 w-8 h-8 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-rose-600 transition-all z-20 border-2 border-white"
+                           >
+                              <X className="w-4 h-4" />
+                           </button>
+                        )}
                      </div>
                      <div>
                         <h3 className="text-2xl font-black text-slate-900 tracking-tight">Business Profile</h3>
-                        <p className="text-sm text-slate-400 mt-1 font-medium">Update your restaurant information displayed on bills</p>
+                        <p className="text-sm text-slate-400 mt-1 font-medium">Update your restaurant logo and information</p>
                      </div>
                   </div>
 

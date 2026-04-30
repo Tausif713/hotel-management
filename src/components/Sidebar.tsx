@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { Logo } from './Logo';
 import { 
   LayoutDashboard, 
   TableProperties as TableIcon, 
@@ -38,6 +40,24 @@ export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const userRole = localStorage.getItem('userRole') || 'Admin';
+  const [hotelSettings, setHotelSettings] = useState<{ name: string; logo: string }>({
+    name: 'Hotel Management',
+    logo: ''
+  });
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    const { data } = await supabase.from('app_settings').select('restaurant_name, logo_url').single();
+    if (data) {
+      setHotelSettings({
+        name: data.restaurant_name,
+        logo: data.logo_url || ''
+      });
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -60,16 +80,15 @@ export default function Sidebar() {
       {/* Brand Header */}
       <div className="p-8">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-amber-400 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-400/20 flex-shrink-0">
-             {/* Custom Cloche SVG */}
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 4V2" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M21 16C21 11.0294 16.9706 7 12 7C7.02944 7 3 11.0294 3 16H21Z" fill="#0f172a" stroke="#0f172a" strokeWidth="2" strokeLinejoin="round"/>
-              <path d="M21 16H3V18C3 19.1046 3.89543 20 5 20H19C20.1046 20 21 19.1046 21 18V16Z" fill="#0f172a" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+          <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0 overflow-hidden group-hover:scale-110 transition-transform duration-300">
+            {hotelSettings.logo ? (
+              <img src={hotelSettings.logo} alt={hotelSettings.name} className="w-full h-full object-cover" />
+            ) : (
+              <Logo className="w-full h-full p-1" />
+            )}
           </div>
           <div className="min-w-0">
-            <h1 className="text-xl font-black text-white leading-tight tracking-tight truncate">Hotel Management</h1>
+            <h1 className="text-xl font-black text-white leading-tight tracking-tight truncate">{hotelSettings.name}</h1>
             <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-[0.2em] truncate mt-0.5">{userRole} Panel</p>
           </div>
         </div>
