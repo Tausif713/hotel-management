@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Link } from 'react-router-dom';
+import { LoadingScreen } from '../components/LoadingScreen';
 
 const statusStyles: any = {
   'New': 'bg-emerald-50 text-emerald-600 border-emerald-100',
@@ -26,30 +27,41 @@ const statusStyles: any = {
 export default function LiveOrders() {
   const [activeFilter, setActiveFilter] = useState('All Orders');
   const [search, setSearch] = useState('');
-  const [liveOrders, setLiveOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [liveOrders, setLiveOrders] = useState<any[]>(() => {
+    const saved = localStorage.getItem('hotel_live_orders');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   useEffect(() => {
     const fetchOrders = async () => {
-      const { data, error } = await supabase
-        .from('app_orders')
-        .select('*')
-        .neq('status', 'completed')
-        .neq('status', 'cancelled')
-        .order('created_at', { ascending: false });
-        
-      if (data && !error) {
-        const formatted = data.map((o: any) => ({
-          id: o.id.substring(0, 8),
-          dbId: o.id,
-          table: o.table_no,
-          status: o.status,
-          time: new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          items: o.items || [],
-          amount: o.total_amount,
-          type: 'Dine-in',
-          waitTime: '12m'
-        }));
-        setLiveOrders(formatted);
+      try {
+        const { data, error } = await supabase
+          .from('app_orders')
+          .select('*')
+          .neq('status', 'completed')
+          .neq('status', 'cancelled')
+          .order('created_at', { ascending: false });
+          
+        if (data && !error) {
+          const formatted = data.map((o: any) => ({
+            id: o.id.replace(/-/g, '').substring(0, 12).toUpperCase(),
+            dbId: o.id,
+            table: o.table_no,
+            status: o.status,
+            time: new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            items: o.items || [],
+            amount: o.total_amount,
+            type: 'Dine-in',
+            waitTime: '12m'
+          }));
+          setLiveOrders(formatted);
+          localStorage.setItem('hotel_live_orders', JSON.stringify(formatted));
+        }
+      } catch (err) {
+        console.error("Error fetching live orders:", err);
+      } finally {
+        setLoading(false);
       }
     };
     
@@ -76,7 +88,8 @@ export default function LiveOrders() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
+    <div className="space-y-8 animate-in fade-in duration-700 relative">
+      {loading && <LoadingScreen />}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Live Orders Tracking</h1>

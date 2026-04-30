@@ -19,7 +19,11 @@ export default function AllOrders() {
     const fetchOrders = async () => {
       const { data, error } = await supabase.from('app_orders').select('*').order('created_at', { ascending: false });
       if (data && !error) {
-        setOrders(data);
+        const formatted = data.map((o: any) => ({
+          ...o,
+          id: typeof o.id === 'string' ? o.id.replace(/-/g, '').substring(0, 12).toUpperCase() : o.id
+        }));
+        setOrders(formatted);
       }
     };
     fetchOrders();

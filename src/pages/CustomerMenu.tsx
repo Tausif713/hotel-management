@@ -13,31 +13,45 @@ import {
   ChevronLeft
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { LoadingScreen } from '../components/LoadingScreen';
 
 export default function CustomerMenu() {
   const { id } = useParams();
   const [cart, setCart] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState('All Items');
   const [searchTerm, setSearchTerm] = useState('');
-  const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [menuItems, setMenuItems] = useState<any[]>(() => {
+    const saved = localStorage.getItem('hotel_menu');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   useEffect(() => {
     const fetchMenu = async () => {
-      const { data, error } = await supabase.from('app_menu').select('*');
-      if (data && data.length > 0 && !error) {
-        setMenuItems(data.map(item => ({
-          id: item.id,
-          name: item.name,
-          category: item.category,
-          price: item.price,
-          isVeg: item.is_veg,
-          isAvailable: item.is_available,
-          spicy: item.spicy,
-          image: item.image,
-          description: item.description
-        })));
-      } else {
-        setMenuItems([]);
+      try {
+        const { data, error } = await supabase.from('app_menu').select('*');
+        if (data && data.length > 0 && !error) {
+          const mapped = data.map(item => ({
+            id: item.id,
+            name: item.name,
+            category: item.category,
+            price: item.price,
+            isVeg: item.is_veg,
+            isAvailable: item.is_available,
+            spicy: item.spicy,
+            image: item.image,
+            description: item.description,
+            rating: item.rating || 4.5
+          }));
+          setMenuItems(mapped);
+          localStorage.setItem('hotel_menu', JSON.stringify(mapped));
+        } else {
+          setMenuItems([]);
+        }
+      } catch (err) {
+        console.error("Error fetching menu:", err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchMenu();
@@ -110,6 +124,7 @@ export default function CustomerMenu() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans max-w-md mx-auto relative shadow-2xl h-screen overflow-hidden border-x border-slate-200">
+      {loading && <LoadingScreen />}
       {/* Visual Header Background */}
       <div className="absolute top-0 left-0 right-0 h-48 bg-slate-900 z-0 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-transparent" />

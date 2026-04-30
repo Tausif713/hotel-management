@@ -16,21 +16,55 @@ import {
   Smartphone, 
   FileText,
   X,
-  Flame
+  Flame,
+  Wifi,
+  Bluetooth,
+  Usb
 } from 'lucide-react';
+
 import { cn } from '../lib/utils';
 import { useSearchParams } from 'react-router-dom';
+import { LoadingScreen } from '../components/LoadingScreen';
 
 export default function CounterPanel() {
   const [searchParams] = useSearchParams();
   const initialTable = searchParams.get('table');
   const [selectedTableId, setSelectedTableId] = useState<string>(initialTable || 'T01');
   const [activeView, setActiveView] = useState<'table' | 'order'>('table');
-  const [tables, setTables] = useState<any[]>([]);
-  const [menuItems, setMenuItems] = useState<any[]>([]);
-  const [bills, setBills] = useState<Record<string, any[]>>({});
+  
+  // Initialize from Local Storage
+  const [tables, setTables] = useState<any[]>(() => {
+    const saved = localStorage.getItem('hotel_tables');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [menuItems, setMenuItems] = useState<any[]>(() => {
+    const saved = localStorage.getItem('hotel_menu');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [bills, setBills] = useState<Record<string, any[]>>(() => {
+    const saved = localStorage.getItem('hotel_active_bills');
+    return saved ? JSON.parse(saved) : {};
+  });
+  
+  const [loading, setLoading] = useState(true);
   const [showAddItem, setShowAddItem] = useState(false);
   const [searchMenu, setSearchMenu] = useState('');
+  const [defaultPrinter, setDefaultPrinter] = useState<any>(null);
+  const [appSettings, setAppSettings] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchSettingsAndPrinter = async () => {
+      const [printerRes, settingsRes] = await Promise.all([
+        supabase.from('app_printers').select('*').eq('is_default', true).maybeSingle(),
+        supabase.from('app_settings').select('*').maybeSingle()
+      ]);
+      if (printerRes.data) setDefaultPrinter(printerRes.data);
+      if (settingsRes.data) setAppSettings(settingsRes.data);
+    };
+    fetchSettingsAndPrinter();
+  }, []);
+
+
 
   useEffect(() => {
     const fetchTablesAndMenu = async () => {
@@ -39,11 +73,18 @@ export default function CounterPanel() {
         supabase.from('app_menu').select('*')
       ]);
       
-      if (tablesRes.data) setTables(tablesRes.data);
-      if (menuRes.data) setMenuItems(menuRes.data.map(item => ({
-        id: item.id, name: item.name, price: item.price, category: item.category, 
-        image: item.image, spicy: item.spicy, isVeg: item.is_veg
-      })));
+      if (tablesRes.data) {
+        setTables(tablesRes.data);
+        localStorage.setItem('hotel_tables', JSON.stringify(tablesRes.data));
+      }
+      if (menuRes.data) {
+        const mappedMenu = menuRes.data.map(item => ({
+          id: item.id, name: item.name, price: item.price, category: item.category, 
+          image: item.image, spicy: item.spicy, isVeg: item.is_veg
+        }));
+        setMenuItems(mappedMenu);
+        localStorage.setItem('hotel_menu', JSON.stringify(mappedMenu));
+      }
     };
     
     const fetchActiveOrders = async () => {
@@ -73,13 +114,19 @@ export default function CounterPanel() {
               mergedBills[tableNo] = [...mergedBills[tableNo], ...newItems];
             }
           });
+          localStorage.setItem('hotel_active_bills', JSON.stringify(mergedBills));
           return mergedBills;
         });
       }
     };
 
-    fetchTablesAndMenu();
-    fetchActiveOrders();
+    const loadAll = async () => {
+      setLoading(true);
+      await Promise.all([fetchTablesAndMenu(), fetchActiveOrders()]);
+      setLoading(false);
+    };
+
+    loadAll();
 
     const subscription = supabase.channel('counter_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'app_tables' }, fetchTablesAndMenu)
@@ -89,18 +136,26 @@ export default function CounterPanel() {
     return () => { supabase.removeChannel(subscription); };
   }, []);
 
+  // Update localStorage when bills change
+  useEffect(() => {
+    localStorage.setItem('hotel_active_bills', JSON.stringify(bills));
+  }, [bills]);
+
   const currentBillItems = bills[selectedTableId] || [];
   const subTotal = currentBillItems.reduce((acc: number, item: any) => acc + (item.price * item.qty), 0);
-  const tax = Math.round(subTotal * 0.05);
+  const tax = Math.round(subTotal * ((appSettings?.tax_percent || 5) / 100));
   const total = subTotal + tax;
+  const currency = appSettings?.currency || '₹';
+
 
   useEffect(() => {
     if (selectedTableId && total >= 0) {
       const currentTable = tables.find(t => t.number === selectedTableId);
       if (currentTable && currentTable.status === 'occupied') {
-        supabase.from('app_tables').update({ bill_amount: `₹ ${total}` }).eq('number', selectedTableId).then();
+        supabase.from('app_tables').update({ bill_amount: `${currency} ${total}` }).eq('number', selectedTableId).then();
       }
     }
+
   }, [total, selectedTableId]);
 
   const handleUpdateQty = (itemName: string, delta: number, isNew: boolean) => {
@@ -182,7 +237,14 @@ export default function CounterPanel() {
       .update({ status: 'free', bill_amount: '-', occupied_since: '-' })
       .eq('number', selectedTableId);
 
-    alert(`Success! Bill Generated for Table ${selectedTableId}. Total: ₹${total}`);
+    const printMsg = defaultPrinter 
+      ? `\nPrinting bill to ${defaultPrinter.name} (${defaultPrinter.type})...` 
+      : '\nNo printer configured. Opening browser print dialog...';
+      
+    alert(`Success! Bill Generated for Table ${selectedTableId}. Total: ₹${total}${printMsg}`);
+    
+    if (!defaultPrinter) window.print();
+
     
     // Clear local state
     setBills(prev => {
@@ -231,6 +293,7 @@ export default function CounterPanel() {
 
   return (
     <div className="h-[calc(100vh-2rem)] flex flex-col bg-[#f8fafc] -mt-8 -mx-8 overflow-hidden font-sans relative">
+      {loading && <LoadingScreen />}
       {/* Header */}
       <header className="px-6 py-4 bg-white border-b border-slate-200 flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center gap-4">
@@ -256,7 +319,22 @@ export default function CounterPanel() {
           </div>
         </div>
 
+        {defaultPrinter && (
+          <div className="hidden lg:flex items-center gap-3 px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-2xl animate-pulse">
+            <div className="text-emerald-600">
+              {defaultPrinter.type === 'WiFi' ? <Wifi className="w-4 h-4" /> : 
+               defaultPrinter.type === 'Bluetooth' ? <Bluetooth className="w-4 h-4" /> : 
+               <Usb className="w-4 h-4" />}
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-emerald-700 leading-none">{defaultPrinter.name}</p>
+              <p className="text-[8px] text-emerald-500 font-bold uppercase mt-0.5">Ready to Print</p>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center gap-4">
+
           <button className="hidden lg:flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-bold border border-indigo-100 hover:bg-indigo-100 transition-all">
             <User className="w-4 h-4" />
             Walk-in Customer
@@ -339,7 +417,7 @@ export default function CounterPanel() {
                            className="p-3 bg-slate-50 border border-slate-100 rounded-xl cursor-pointer hover:bg-white hover:border-indigo-200 hover:shadow-sm transition-all"
                         >
                            <p className="text-xs font-bold text-slate-800">{item.name}</p>
-                           <p className="text-[10px] text-indigo-600 font-black mt-1">₹ {item.price}</p>
+                           <p className="text-[10px] text-indigo-600 font-black mt-1">{currency} {item.price}</p>
                         </div>
                      ))}
                   </div>
@@ -385,7 +463,7 @@ export default function CounterPanel() {
                            <span className="flex-1">{item.name}</span>
                            <div className="flex items-center gap-4">
                               <span className="text-slate-400">x{item.qty}</span>
-                              <span className="font-black text-slate-900 w-12 text-right">₹ {item.price * item.qty}</span>
+                              <span className="font-black text-slate-900 w-12 text-right">{currency} {item.price * item.qty}</span>
                            </div>
                          </div>
                       ))
@@ -396,7 +474,7 @@ export default function CounterPanel() {
                    )}
                    <div className="pt-4 mt-2 border-t border-slate-50 flex items-center justify-between">
                       <span className="text-[10px] font-bold text-slate-400 uppercase">Sub Total</span>
-                      <span className="text-sm font-black text-indigo-600">₹ {subTotal}</span>
+                      <span className="text-sm font-black text-indigo-600">{currency} {subTotal}</span>
                    </div>
                 </div>
              </div>
@@ -444,7 +522,7 @@ export default function CounterPanel() {
                         <p className="text-sm font-medium text-slate-800">{item.name}</p>
                         {item.isNew && <span className="text-[8px] bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">NEW</span>}
                       </div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">₹{item.price} x {item.qty}</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">{currency}{item.price} x {item.qty}</p>
                     </div>
                     
                     <div className="flex items-center gap-4">
@@ -465,7 +543,7 @@ export default function CounterPanel() {
                       </div>
                       
                       <div className="w-20 text-right">
-                        <p className="text-sm font-black text-slate-900 font-mono">₹{item.price * item.qty}</p>
+                        <p className="text-sm font-black text-slate-900 font-mono">{currency}{item.price * item.qty}</p>
                       </div>
                       
                       <button 
@@ -490,15 +568,15 @@ export default function CounterPanel() {
             <div className="space-y-2.5 mb-6">
               <div className="flex items-center justify-between text-[9px] font-bold text-slate-400 uppercase tracking-widest">
                 <span>Sub Total</span>
-                <span className="text-slate-900">₹ {subTotal}</span>
+                <span className="text-slate-900">{currency} {subTotal}</span>
               </div>
               <div className="flex items-center justify-between text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                <span>Tax (GST 5%)</span>
-                <span className="text-slate-900">₹ {tax}</span>
+                <span>Tax (GST {appSettings?.tax_percent || 5}%)</span>
+                <span className="text-slate-900">{currency} {tax}</span>
               </div>
               <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
                 <span className="text-sm font-bold text-slate-900 uppercase tracking-tighter">Total Amount</span>
-                <span className="text-2xl font-bold text-slate-900 tracking-tighter">₹ {total}</span>
+                <span className="text-2xl font-bold text-slate-900 tracking-tighter">{currency} {total}</span>
               </div>
             </div>
 
@@ -580,7 +658,7 @@ export default function CounterPanel() {
                               <Plus className="w-4 h-4 text-slate-300 group-hover:text-indigo-600 transition-colors" />
                            </div>
                            <p className="text-sm font-black text-slate-800 mt-2">{item.name}</p>
-                           <p className="text-lg font-black text-indigo-600 mt-1">₹ {item.price}</p>
+                           <p className="text-lg font-black text-indigo-600 mt-1">{currency} {item.price}</p>
                         </div>
                      ))}
                   </div>

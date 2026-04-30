@@ -9,30 +9,30 @@ import {
   Calculator, 
   Receipt, 
   ClipboardList, 
-  History, 
   Users, 
   BookOpen, 
   BarChart3, 
   Settings,
   LogOut
 } from 'lucide-react';
+
 import { cn } from '../lib/utils';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-  { icon: TableIcon, label: 'Table Management', path: '/tables-grid' },
+  { icon: TableIcon, label: 'Tables', path: '/tables' },
   { icon: QrCode, label: 'QR Code', path: '/qr' },
   { icon: ShoppingCart, label: 'Orders', path: '/orders-live' },
   { icon: ChefHat, label: 'Kitchen Panel', path: '/kitchen' },
   { icon: Calculator, label: 'Counter Panel', path: '/counter' },
   { icon: Receipt, label: 'Billing', path: '/billing' },
   { icon: ClipboardList, label: 'All Orders', path: '/orders' },
-  { icon: History, label: 'Table Billing', path: '/tables' },
   { icon: Users, label: 'Staff Management', path: '/staff' },
   { icon: BookOpen, label: 'Menu Management', path: '/menu' },
   { icon: BarChart3, label: 'Reports', path: '/reports' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];
+
 
 export default function Sidebar() {
   const location = useLocation();
@@ -49,8 +49,9 @@ export default function Sidebar() {
   const filteredMenuItems = menuItems.filter(item => {
     if (userRole === 'Admin') return true;
     if (userRole === 'Chef') return ['Kitchen Panel', 'Orders'].includes(item.label);
-    if (userRole === 'Waiter') return ['Counter Panel', 'Table Management', 'Orders'].includes(item.label);
-    if (userRole === 'Cashier') return ['Counter Panel', 'Billing', 'All Orders', 'Table Billing'].includes(item.label);
+    if (userRole === 'Waiter') return ['Counter Panel', 'Tables', 'Orders'].includes(item.label);
+    if (userRole === 'Cashier') return ['Counter Panel', 'Billing', 'All Orders', 'Tables'].includes(item.label);
+
     return false;
   });
 

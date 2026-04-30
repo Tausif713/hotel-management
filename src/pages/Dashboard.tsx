@@ -25,6 +25,7 @@ import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { LoadingScreen } from '../components/LoadingScreen';
 
 const chartData = [
   { name: 'Mon', sales: 4000 },
@@ -73,32 +74,57 @@ const topSellingItems = [
 const staffOverview: any[] = [];
 
 export default function Dashboard() {
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
-  const [dashboardTables, setDashboardTables] = useState<any[]>([]);
-  const [stats, setStats] = useState({ sales: 0, orders: 0, activeTables: 0, totalTables: 0 });
+  const [loading, setLoading] = useState(true);
+  const [recentOrders, setRecentOrders] = useState<any[]>(() => {
+    const saved = localStorage.getItem('dash_recent_orders');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [dashboardTables, setDashboardTables] = useState<any[]>(() => {
+    const saved = localStorage.getItem('dash_tables');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [stats, setStats] = useState(() => {
+    const saved = localStorage.getItem('dash_stats');
+    return saved ? JSON.parse(saved) : { sales: 0, orders: 0, activeTables: 0, totalTables: 0 };
+  });
 
   useEffect(() => {
     const fetchData = async () => {
-      const [{ data: orders }, { data: tables }] = await Promise.all([
-        supabase.from('app_orders').select('*').order('created_at', { ascending: false }).limit(5),
-        supabase.from('app_tables').select('*')
-      ]);
+      try {
+        const [{ data: orders }, { data: tables }] = await Promise.all([
+          supabase.from('app_orders').select('*').order('created_at', { ascending: false }).limit(5),
+          supabase.from('app_tables').select('*')
+        ]);
 
-      if (orders) {
-        setRecentOrders(orders);
-        const totalSales = orders.reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0);
-        
-        let activeTbls = 0;
-        let totalTbls = 0;
-        if (tables) {
-          setDashboardTables(tables.slice(0, 8)); // Show up to 8 tables
-          totalTbls = tables.length;
-          activeTbls = tables.filter(t => t.status !== 'free').length;
+        if (orders) {
+          const formattedOrders = orders.map((o: any) => ({
+            ...o,
+            id: typeof o.id === 'string' ? o.id.replace(/-/g, '').substring(0, 12).toUpperCase() : o.id
+          }));
+          setRecentOrders(formattedOrders);
+          localStorage.setItem('dash_recent_orders', JSON.stringify(formattedOrders));
+          const totalSales = orders.reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0);
+          
+          let activeTbls = 0;
+          let totalTbls = 0;
+          if (tables) {
+            setDashboardTables(tables.slice(0, 8)); // Show up to 8 tables
+            localStorage.setItem('dash_tables', JSON.stringify(tables.slice(0, 8)));
+            totalTbls = tables.length;
+            activeTbls = tables.filter(t => t.status !== 'free').length;
+          }
+
+          const newStats = { sales: totalSales, orders: orders.length, activeTables: activeTbls, totalTables: totalTbls };
+          setStats(newStats);
+          localStorage.setItem('dash_stats', JSON.stringify(newStats));
         }
-
-        setStats({ sales: totalSales, orders: orders.length, activeTables: activeTbls, totalTables: totalTbls });
+      } catch (err) {
+        console.error("Dashboard data fetch error:", err);
+      } finally {
+        setLoading(false);
       }
     };
+    
     fetchData();
     const subscription = supabase.channel('dashboard_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'app_orders' }, fetchData)
@@ -109,6 +135,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {loading && <LoadingScreen />}
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-black text-slate-900 tracking-tight">Dashboard</h1>

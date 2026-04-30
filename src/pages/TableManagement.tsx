@@ -103,11 +103,29 @@ export default function TableManagement() {
     if (error) alert("Error toggling table: " + error.message);
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this table?")) {
-      const { error } = await supabase.from('app_tables').delete().eq('id', id);
-      if (error) alert("Error deleting table: " + error.message);
-    }
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  const updateTableStatus = async (id: string, status: string) => {
+    const { error } = await supabase.from('app_tables').update({ 
+      status,
+      occupied_since: status === 'free' ? '-' : 'Just Now',
+      bill_amount: status === 'free' ? '-' : '₹ 0'
+    }).eq('id', id);
+    if (error) alert(error.message);
+    setOpenMenuId(null);
+  };
+
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const handleDelete = (id: string) => {
+    setDeleteConfirmId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmId) return;
+    const { error } = await supabase.from('app_tables').delete().eq('id', deleteConfirmId);
+    if (error) alert("Error deleting table: " + error.message);
+    setDeleteConfirmId(null);
   };
 
   const filteredTables = tables.filter(t => filter === 'All' || t.status === filter);
@@ -186,7 +204,42 @@ export default function TableManagement() {
                    <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-wide">{table.capacity} Seats</p>
                 </div>
               </div>
-              <button className="text-slate-300 hover:text-slate-600"><MoreVertical className="w-5 h-5" /></button>
+              <div className="relative">
+                <button 
+                  onClick={() => setOpenMenuId(openMenuId === table.id ? null : table.id)}
+                  className="text-slate-300 hover:text-slate-600 transition-colors"
+                >
+                  <MoreVertical className="w-5 h-5" />
+                </button>
+                
+                {openMenuId === table.id && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={() => setOpenMenuId(null)}
+                    />
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-20 animate-in fade-in zoom-in-95 duration-200">
+                      <div className="px-4 py-2 border-b border-slate-50">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Update Status</p>
+                      </div>
+                      {[
+                        { label: 'Set as Available', status: 'free', icon: CheckCircle2, color: 'text-emerald-500' },
+                        { label: 'Set as Occupied', status: 'occupied', icon: UtensilsCrossed, color: 'text-orange-500' },
+                        { label: 'Set as Reserved', status: 'reserved', icon: Clock, color: 'text-indigo-500' },
+                      ].map((item) => (
+                        <button
+                          key={item.status}
+                          onClick={() => updateTableStatus(table.id, item.status)}
+                          className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors text-left"
+                        >
+                          <item.icon className={cn("w-4 h-4", item.color)} />
+                          <span className="text-xs font-bold text-slate-700">{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
             
             <div className="p-6 space-y-4">
@@ -294,6 +347,33 @@ export default function TableManagement() {
                     {editingTable ? 'Save Changes' : 'Create Table'}
                  </button>
               </form>
+           </div>
+        </div>
+      )}
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+           <div className="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden border border-slate-100 p-8 text-center animate-in zoom-in-95 duration-300">
+              <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                 <Trash2 className="w-10 h-10 text-rose-500" />
+              </div>
+              <h2 className="text-xl font-black text-slate-900 tracking-tight">Delete Table?</h2>
+              <p className="text-sm text-slate-500 mt-2 font-medium">Are you sure you want to remove this table? This action cannot be undone.</p>
+              
+              <div className="grid grid-cols-2 gap-3 mt-8">
+                 <button 
+                    onClick={() => setDeleteConfirmId(null)}
+                    className="py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all"
+                 >
+                    CANCEL
+                 </button>
+                 <button 
+                    onClick={confirmDelete}
+                    className="py-3.5 bg-rose-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-600 transition-all shadow-xl shadow-rose-100"
+                 >
+                    DELETE
+                 </button>
+              </div>
            </div>
         </div>
       )}

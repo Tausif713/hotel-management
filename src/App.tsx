@@ -7,7 +7,7 @@ import StaffManagement from './pages/StaffManagement';
 import AllOrders from './pages/AllOrders';
 import TablesBilling from './pages/TablesBilling';
 import CustomerMenu from './pages/CustomerMenu';
-import TableManagement from './pages/TableManagement';
+
 import QRCodePage from './pages/QRCodePage';
 import LiveOrders from './pages/LiveOrders';
 import BillingPage from './pages/BillingPage';
@@ -48,14 +48,14 @@ function AppContent() {
       )}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/tables-grid" element={<TableManagement />} />
+          <Route path="/tables" element={<TablesBilling />} />
+
           <Route path="/qr" element={<QRCodePage />} />
           <Route path="/orders-live" element={<LiveOrders />} />
           <Route path="/kitchen" element={<KitchenPanel />} />
           <Route path="/counter" element={<CounterPanel />} />
           <Route path="/billing" element={<BillingPage />} />
           <Route path="/orders" element={<AllOrders />} />
-          <Route path="/tables" element={<TablesBilling />} />
           <Route path="/staff" element={<StaffManagement />} />
           <Route path="/menu" element={<MenuPage />} />
           <Route path="/reports" element={<ReportsPage />} />

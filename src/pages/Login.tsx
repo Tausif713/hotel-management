@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { cn } from '../lib/utils';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -10,8 +9,6 @@ export default function Login() {
   const navigate = useNavigate();
 
   const [isSignUp, setIsSignUp] = useState(false);
-  const [loginMode, setLoginMode] = useState<'admin' | 'staff'>('admin');
-  const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -19,25 +16,6 @@ export default function Login() {
     setLoading(true);
 
     try {
-      if (loginMode === 'staff') {
-        const { data: staffData, error } = await supabase
-          .from('app_staff')
-          .select('*')
-          .eq('pin', pin)
-          .single();
-
-        if (error || !staffData) throw new Error("Invalid PIN");
-
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userRole', staffData.role);
-        localStorage.setItem('userName', staffData.name);
-
-        if (staffData.role === 'Chef') navigate('/kitchen');
-        else if (staffData.role === 'Waiter') navigate('/counter');
-        else navigate('/');
-        return;
-      }
-
       if (isSignUp) {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -110,76 +88,41 @@ export default function Login() {
         {/* Login Card */}
         <div className="bg-white/[0.02] backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
           
-          <div className="flex bg-slate-800/50 p-1 rounded-xl mb-8 border border-white/5">
-            <button 
-              onClick={() => { setLoginMode('admin'); setIsSignUp(false); }}
-              className={cn("flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all", loginMode === 'admin' ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-200")}
-            >
-              Admin Login
-            </button>
-            <button 
-              onClick={() => { setLoginMode('staff'); setIsSignUp(false); }}
-              className={cn("flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all", loginMode === 'staff' ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-slate-200")}
-            >
-              Staff PIN
-            </button>
-          </div>
-
           <div className="mb-8">
-            <h2 className="text-xl font-black text-white">{loginMode === 'staff' ? 'Staff PIN Login' : (isSignUp ? 'Create Account' : 'Welcome Back')}</h2>
-            <p className="text-sm text-slate-400 mt-1">{loginMode === 'staff' ? 'Enter your 4-digit PIN to start your shift' : (isSignUp ? 'Register to manage your hotel' : 'Sign in to access the control panel')}</p>
+            <h2 className="text-xl font-black text-white">{isSignUp ? 'Create Account' : 'Welcome Back'}</h2>
+            <p className="text-sm text-slate-400 mt-1">{isSignUp ? 'Register to manage your hotel' : 'Sign in to access the control panel'}</p>
           </div>
 
           <form onSubmit={handleAuth} className="space-y-5">
-            {loginMode === 'admin' ? (
-              <>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Email Address</label>
-                  <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
-                    <input 
-                      type="email" 
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="admin@hotel.com"
-                      className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder:text-slate-600 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 outline-none transition-all"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Password</label>
-                  <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
-                    <input 
-                      type="password" 
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder:text-slate-600 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 outline-none transition-all"
-                      required
-                    />
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 text-center block">Enter 4-Digit Security PIN</label>
-                <div className="flex justify-center gap-4">
-                  <input 
-                    type="password" 
-                    maxLength={4}
-                    value={pin}
-                    onChange={(e) => setPin(e.target.value)}
-                    placeholder="0000"
-                    className="w-40 bg-slate-800/50 border border-slate-700/50 rounded-2xl py-5 text-center text-3xl font-black tracking-[1em] text-indigo-400 focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
-                    required
-                    autoFocus
-                  />
-                </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Email Address</label>
+              <div className="relative group">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+                <input 
+                  type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@hotel.com"
+                  className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder:text-slate-600 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 outline-none transition-all"
+                  required
+                />
               </div>
-            )}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Password</label>
+              <div className="relative group">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+                <input 
+                  type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder:text-slate-600 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 outline-none transition-all"
+                  required
+                />
+              </div>
+            </div>
 
             <div className="pt-2">
               <button 
@@ -187,14 +130,13 @@ export default function Login() {
                 disabled={loading}
                 className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-indigo-500/25 group disabled:opacity-50"
               >
-                {loading ? 'Processing...' : (loginMode === 'staff' ? 'Access Panel' : (isSignUp ? 'Sign Up' : 'Sign In'))}
+                {loading ? 'Processing...' : (isSignUp ? 'Sign Up' : 'Sign In')}
                 {!loading && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
               </button>
             </div>
           </form>
 
-          {loginMode === 'admin' && (
-            <div className="mt-6 text-center">
+          <div className="mt-6 text-center">
               <button 
                 type="button" 
                 onClick={() => setIsSignUp(!isSignUp)}
@@ -203,8 +145,7 @@ export default function Login() {
                 {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
               </button>
             </div>
-          )}
-        </div>
+          </div>
       </div>
     </div>
   );
