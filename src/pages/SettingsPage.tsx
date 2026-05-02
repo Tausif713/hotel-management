@@ -59,6 +59,7 @@ interface AppSettings {
   compact_mode: boolean;
   admin_pin: string;
   logo_url?: string;
+  gstin?: string;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -78,7 +79,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   theme: 'light',
   compact_mode: false,
   admin_pin: '1234',
-  logo_url: ''
+  logo_url: '',
+  gstin: '27AAAAA0000A1Z5'
 };
 
 export default function SettingsPage() {
@@ -346,9 +348,16 @@ export default function SettingsPage() {
                         </div>
                      </div>
 
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Store Address</label>
-                        <textarea rows={3} value={settings.address} onChange={(e) => updateSetting('address', e.target.value)} className="w-full bg-slate-50 border-none rounded-3xl py-4 px-6 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none resize-none" />
+                     <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Store Address</label>
+                           <textarea rows={3} value={settings.address} onChange={(e) => updateSetting('address', e.target.value)} className="w-full bg-slate-50 border-none rounded-3xl py-4 px-6 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none resize-none" />
+                        </div>
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">GSTIN Number</label>
+                           <input type="text" placeholder="e.g. 27AAAAA0000A1Z5" value={settings.gstin || ''} onChange={(e) => updateSetting('gstin', e.target.value)} className="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none" />
+                           <p className="text-[9px] text-slate-400 font-bold ml-1 uppercase">Tax Identification Number</p>
+                        </div>
                      </div>
 
                      <div className="grid grid-cols-3 gap-6 pt-4">

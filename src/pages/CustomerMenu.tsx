@@ -34,6 +34,7 @@ export default function CustomerMenu() {
           const mapped = data.map(item => ({
             id: item.id,
             name: item.name,
+            code: item.code || '',
             category: item.category,
             price: item.price,
             isVeg: item.is_veg,
@@ -81,7 +82,8 @@ export default function CustomerMenu() {
 
   const filteredMenu = menuItems.filter(item => 
     (activeCategory === 'All Items' || item.category === activeCategory) &&
-    (item.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    (item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+     (item.code && item.code.toLowerCase().includes(searchTerm.toLowerCase())))
   );
 
   const handleCheckout = async () => {

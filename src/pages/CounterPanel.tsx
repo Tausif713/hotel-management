@@ -25,6 +25,7 @@ import {
 import { cn } from '../lib/utils';
 import { useSearchParams } from 'react-router-dom';
 import { LoadingScreen } from '../components/LoadingScreen';
+import { PrintReceipt } from '../components/PrintReceipt';
 
 export default function CounterPanel() {
   const [searchParams] = useSearchParams();
@@ -51,6 +52,7 @@ export default function CounterPanel() {
   const [searchMenu, setSearchMenu] = useState('');
   const [defaultPrinter, setDefaultPrinter] = useState<any>(null);
   const [appSettings, setAppSettings] = useState<any>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('Cash');
 
   useEffect(() => {
     const fetchSettingsAndPrinter = async () => {
@@ -79,8 +81,14 @@ export default function CounterPanel() {
       }
       if (menuRes.data) {
         const mappedMenu = menuRes.data.map(item => ({
-          id: item.id, name: item.name, price: item.price, category: item.category, 
-          image: item.image, spicy: item.spicy, isVeg: item.is_veg
+          id: item.id, 
+          name: item.name, 
+          code: item.code || '',
+          price: item.price, 
+          category: item.category, 
+          image: item.image, 
+          spicy: item.spicy, 
+          isVeg: item.is_veg
         }));
         setMenuItems(mappedMenu);
         localStorage.setItem('hotel_menu', JSON.stringify(mappedMenu));
@@ -214,7 +222,7 @@ export default function CounterPanel() {
       subtotal: subTotal,
       tax: tax,
       total_amount: total,
-      payment_method: 'Cash', // Default
+      payment_method: selectedPaymentMethod,
       status: 'Paid',
       created_at: new Date().toISOString()
     };
@@ -500,15 +508,22 @@ export default function CounterPanel() {
           <div className="p-6 border-b border-dashed border-slate-200">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-bold text-slate-900 tracking-tight">Table {selectedTableId}</h3>
-                <p className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest mt-0.5">Order Details</p>
+                <h3 className="text-lg font-bold text-slate-900 tracking-tight">{appSettings?.restaurant_name || 'GrandHotel'}</h3>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{appSettings?.address}</p>
+                <div className="flex gap-4 mt-1">
+                  {appSettings?.phone && <p className="text-[9px] font-bold text-indigo-500">Ph: {appSettings.phone}</p>}
+                  {appSettings?.gstin && <p className="text-[9px] font-bold text-rose-500 uppercase">GSTIN: {appSettings.gstin}</p>}
+                </div>
               </div>
-              <button 
-                 onClick={() => setShowAddItem(true)}
-                 className="bg-slate-900 text-white p-2.5 rounded-xl shadow-lg hover:scale-110 active:scale-95 transition-all"
-              >
-                 <Plus className="w-4 h-4" />
-              </button>
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] font-black text-slate-900 bg-slate-100 px-3 py-1 rounded-lg uppercase tracking-wider mb-2">Table {selectedTableId}</span>
+                <button 
+                   onClick={() => setShowAddItem(true)}
+                   className="bg-slate-900 text-white p-2.5 rounded-xl shadow-lg hover:scale-110 active:scale-95 transition-all"
+                >
+                   <Plus className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -582,24 +597,27 @@ export default function CounterPanel() {
 
             <div className="space-y-4">
                {/* Payment Methods Integration */}
-               <div className="bg-white rounded-xl border border-slate-200 p-1.5 flex items-center justify-between gap-1">
-                  {[
-                    { label: 'Cash', icon: Banknote, bg: 'hover:bg-emerald-50 hover:text-emerald-600', active: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
-                    { label: 'Card', icon: CreditCard, bg: 'hover:bg-blue-50 hover:text-blue-600', active: 'bg-blue-50 text-blue-600 border-blue-100' },
-                    { label: 'UPI', icon: Smartphone, bg: 'hover:bg-purple-50 hover:text-purple-600', active: 'bg-purple-50 text-purple-600 border-purple-100' },
-                  ].map((p, i) => (
-                    <button 
-                       key={i} 
-                       className={cn(
-                          "flex-1 py-2.5 rounded-lg flex flex-col items-center gap-1 border border-transparent transition-all",
-                          i === 0 ? p.active : `text-slate-400 ${p.bg}`
-                       )}
-                    >
-                       <p.icon className="w-3.5 h-3.5" />
-                       <span className="text-[8px] font-bold uppercase tracking-widest">{p.label}</span>
-                    </button>
-                  ))}
-               </div>
+                <div className="bg-white rounded-xl border border-slate-200 p-1.5 flex items-center justify-between gap-1">
+                   {[
+                     { label: 'Cash', icon: Banknote, color: 'emerald' },
+                     { label: 'Card', icon: CreditCard, color: 'blue' },
+                     { label: 'UPI', icon: Smartphone, color: 'purple' },
+                   ].map((p, i) => (
+                     <button 
+                        key={i} 
+                        onClick={() => setSelectedPaymentMethod(p.label)}
+                        className={cn(
+                           "flex-1 py-2.5 rounded-lg flex flex-col items-center gap-1 border border-transparent transition-all",
+                           selectedPaymentMethod === p.label 
+                            ? `bg-${p.color}-50 text-${p.color}-600 border-${p.color}-100` 
+                            : `text-slate-400 hover:bg-slate-50`
+                        )}
+                     >
+                        <p.icon className="w-3.5 h-3.5" />
+                        <span className="text-[8px] font-bold uppercase tracking-widest">{p.label}</span>
+                     </button>
+                   ))}
+                </div>
 
                <button 
                   onClick={handleGenerateBill}
@@ -643,24 +661,30 @@ export default function CounterPanel() {
                </div>
                
                <div className="p-8">
-                  <div className="grid grid-cols-2 gap-4">
-                     {menuItems.map((item, i) => (
-                        <div 
-                           key={i} 
-                           onClick={() => {
-                              handleAddItem(item);
-                              setShowAddItem(false);
-                           }}
-                           className="p-5 bg-slate-50 border border-slate-100 rounded-[1.5rem] cursor-pointer hover:bg-white hover:border-indigo-600 hover:shadow-xl hover:shadow-indigo-50 hover:-translate-y-1 transition-all group"
-                        >
-                           <div className="flex justify-between items-start">
-                              <span className="text-[10px] font-black text-indigo-600 opacity-60 uppercase tracking-widest">{item.category}</span>
-                              <Plus className="w-4 h-4 text-slate-300 group-hover:text-indigo-600 transition-colors" />
-                           </div>
-                           <p className="text-sm font-black text-slate-800 mt-2">{item.name}</p>
-                           <p className="text-lg font-black text-indigo-600 mt-1">{currency} {item.price}</p>
-                        </div>
-                     ))}
+                  <div className="grid grid-cols-2 gap-4 overflow-y-auto max-h-[50vh] pr-2 scrollbar-hide">
+                      {menuItems.filter(item => 
+                        item.name.toLowerCase().includes(searchMenu.toLowerCase()) || 
+                        (item.code && item.code.toLowerCase().includes(searchMenu.toLowerCase()))
+                      ).map((item, i) => (
+                         <div 
+                            key={i} 
+                            onClick={() => {
+                               handleAddItem(item);
+                               setShowAddItem(false);
+                            }}
+                            className="p-5 bg-slate-50 border border-slate-100 rounded-[1.5rem] cursor-pointer hover:bg-white hover:border-indigo-600 hover:shadow-xl hover:shadow-indigo-50 hover:-translate-y-1 transition-all group"
+                         >
+                            <div className="flex justify-between items-start">
+                               <div className="flex flex-col">
+                                  <span className="text-[10px] font-black text-indigo-600 opacity-60 uppercase tracking-widest">{item.category}</span>
+                                  {item.code && <span className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">#{item.code}</span>}
+                               </div>
+                               <Plus className="w-4 h-4 text-slate-300 group-hover:text-indigo-600 transition-colors" />
+                            </div>
+                            <p className="text-sm font-black text-slate-800 mt-2">{item.name}</p>
+                            <p className="text-lg font-black text-indigo-600 mt-1">{currency} {item.price}</p>
+                         </div>
+                      ))}
                   </div>
                </div>
                
@@ -671,6 +695,21 @@ export default function CounterPanel() {
          </div>
       )}
 
+      {/* Hidden Print Receipt */}
+      <PrintReceipt 
+        hotelName={appSettings?.restaurant_name || 'GrandHotel'}
+        tagline={appSettings?.tagline}
+        address={appSettings?.address}
+        phone={appSettings?.phone}
+        gstin={appSettings?.gstin}
+        tableNo={selectedTableId}
+        items={currentBillItems}
+        subtotal={subTotal}
+        tax={tax}
+        total={total}
+        currency={currency}
+        paymentMethod={selectedPaymentMethod}
+      />
     </div>
   );
 }

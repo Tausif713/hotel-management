@@ -90,3 +90,56 @@ body {
   );
   animation: shimmer 2s infinite;
 }
+
+/* Print Styles */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Hide everything by default */
+  #root > div > aside,
+  #root > div > main > div > div.flex.items-center.justify-between,
+  #root > div > main > div > div.grid,
+  #root > div > main > div > div.p-4,
+  header,
+  nav,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Reset main layout for print */
+  #root > div {
+    display: block !important;
+  }
+
+  #root > div > main {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Show only the printable content */
+  .printable {
+    display: block !important;
+    width: 80mm !important; /* Standard thermal paper width */
+    margin: 0 auto !important;
+    padding: 10px !important;
+    font-family: 'Courier New', Courier, monospace !important;
+  }
+
+  .printable * {
+    visibility: visible !important;
+  }
+
+  /* Hide scrollbars and other UI artifacts */
+  ::-webkit-scrollbar {
+    display: none !important;
+  }
+}

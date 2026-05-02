@@ -13,11 +13,13 @@ import {
   Usb,
   Plus,
   X,
-  Search
+  Search,
+  Utensils
 } from 'lucide-react';
 
 import { cn } from '../lib/utils';
 import { LoadingScreen } from '../components/LoadingScreen';
+import { PrintKOT } from '../components/PrintKOT';
 
 interface PrinterDevice {
   id: string;
@@ -37,6 +39,7 @@ interface PrinterDevice {
 export default function KitchenPanel() {
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<any[]>([]);
+  const [printOrder, setPrintOrder] = useState<any>(null);
   
   // Printer State
   const [printers, setPrinters] = useState<PrinterDevice[]>([]);
@@ -105,7 +108,12 @@ export default function KitchenPanel() {
       if (defaultKitchenPrinter) {
         alert(`🖨️ Printing KOT for Order #${id} to ${defaultKitchenPrinter.name}...`);
       } else {
-        alert(`Order #${id} started. No Kitchen Printer configured.`);
+        // Fallback to browser print
+        setPrintOrder(orderToUpdate);
+        setTimeout(() => {
+          window.print();
+          setPrintOrder(null);
+        }, 500);
       }
     }
 
@@ -279,10 +287,13 @@ export default function KitchenPanel() {
                              </button>
                            )}
                            {col.status === 'ready' && (
-                             <div className="w-full text-center py-3 text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-center gap-2">
-                               <Clock className="w-4 h-4" />
-                               Waiting for Waiter
-                             </div>
+                             <button 
+                               onClick={() => moveOrder(order.id, 'served')}
+                               className="w-full py-3 text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-600 hover:text-white transition-all shadow-lg shadow-indigo-100/20 active:scale-95"
+                             >
+                               <Utensils className="w-4 h-4" />
+                               Mark as Served
+                             </button>
                            )}
                         </div>
                      </div>
@@ -440,7 +451,16 @@ export default function KitchenPanel() {
                   Save Printer
                 </button>
               </div>
-            </div>
+              {/* Hidden Print KOT */}
+      {printOrder && (
+        <PrintKOT 
+          orderId={printOrder.id}
+          tableNo={printOrder.table}
+          time={printOrder.time}
+          items={printOrder.items}
+        />
+      )}
+    </div>
           </div>
         </div>
       )}

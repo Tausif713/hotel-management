@@ -28,6 +28,7 @@ export default function MenuPage() {
         setMenu(data.map(item => ({
           id: item.id,
           name: item.name,
+          code: item.code || '',
           category: item.category,
           price: item.price,
           isVeg: item.is_veg,
@@ -52,6 +53,7 @@ export default function MenuPage() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
+    code: '',
     price: '',
     category: 'Main Course',
     isVeg: true,
@@ -60,10 +62,13 @@ export default function MenuPage() {
     description: ''
   });
 
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
   const handleAddProduct = () => {
     setEditingItem(null);
     setFormData({
       name: '',
+      code: '',
       price: '',
       category: 'Main Course',
       isVeg: true,
@@ -78,6 +83,7 @@ export default function MenuPage() {
     setEditingItem(item);
     setFormData({
       name: item.name,
+      code: item.code || '',
       price: item.price.toString(),
       category: item.category,
       isVeg: item.isVeg,
@@ -92,6 +98,7 @@ export default function MenuPage() {
     e.preventDefault();
     const dataToSave = {
       name: formData.name,
+      code: formData.code,
       price: parseFloat(formData.price),
       category: formData.category,
       is_veg: formData.isVeg,
@@ -124,10 +131,34 @@ export default function MenuPage() {
   };
 
   const filteredMenu = menu.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = 
+      item.name.toLowerCase().includes(search.toLowerCase()) || 
+      (item.code && item.code.toLowerCase().includes(search.toLowerCase()));
     const matchesCategory = activeCategory === 'All Items' || item.category === activeCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const toggleSelect = (id: string) => {
+    setSelectedItems(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedItems.length === 0) return;
+    if (window.confirm(`Delete ${selectedItems.length} items?`)) {
+      const { error } = await supabase.from('app_menu').delete().in('id', selectedItems);
+      if (!error) setSelectedItems([]);
+      else alert(error.message);
+    }
+  };
+
+  const handleBulkStatus = async (available: boolean) => {
+    if (selectedItems.length === 0) return;
+    const { error } = await supabase.from('app_menu').update({ is_available: available }).in('id', selectedItems);
+    if (!error) setSelectedItems([]);
+    else alert(error.message);
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -136,10 +167,26 @@ export default function MenuPage() {
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Menu Management</h1>
           <p className="text-sm text-slate-500 mt-1 font-medium">Create, edit and manage your digital menu items</p>
         </div>
-        <button onClick={handleAddProduct} className="px-6 py-3 bg-[#4f46e5] text-white rounded-2xl text-sm font-black flex items-center gap-2 hover:bg-[#4338ca] transition-all shadow-xl shadow-indigo-100">
-          <Plus className="w-5 h-5" />
-          ADD NEW PRODUCT
-        </button>
+        <div className="flex items-center gap-3">
+          {selectedItems.length > 0 && (
+            <div className="flex items-center gap-2 animate-in slide-in-from-right duration-300">
+               <button onClick={() => handleBulkStatus(true)} className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all">
+                  Set Available ({selectedItems.length})
+               </button>
+               <button onClick={() => handleBulkStatus(false)} className="px-4 py-2 bg-amber-50 text-amber-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all">
+                  Set Hidden ({selectedItems.length})
+               </button>
+               <button onClick={handleBulkDelete} className="px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all">
+                  Delete Selected ({selectedItems.length})
+               </button>
+               <div className="h-8 w-px bg-slate-200 mx-2" />
+            </div>
+          )}
+          <button onClick={handleAddProduct} className="px-6 py-3 bg-[#4f46e5] text-white rounded-2xl text-sm font-black flex items-center gap-2 hover:bg-[#4338ca] transition-all shadow-xl shadow-indigo-100">
+            <Plus className="w-5 h-5" />
+            ADD NEW PRODUCT
+          </button>
+        </div>
       </div>
 
       {/* Categories Toolbar */}
@@ -192,8 +239,16 @@ export default function MenuPage() {
           {filteredMenu.map((item) => (
             <div key={item.id} className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                <div className="relative h-48 overflow-hidden">
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
+                   <div className="absolute top-4 left-4 z-10">
+                      <input 
+                        type="checkbox" 
+                        className="w-5 h-5 rounded-lg border-white/20 bg-black/20 backdrop-blur-md checked:bg-indigo-600 transition-all cursor-pointer"
+                        checked={selectedItems.includes(item.id)}
+                        onChange={() => toggleSelect(item.id)}
+                      />
+                   </div>
+                   <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
                      <div className="flex items-center gap-2">
                         {item.isVeg ? (
                           <div className="w-4 h-4 bg-emerald-500 border-2 border-white rounded-full" />
@@ -202,19 +257,22 @@ export default function MenuPage() {
                         )}
                         <span className="text-[10px] font-black text-white uppercase tracking-widest">{item.category}</span>
                      </div>
-                  </div>
-                  <button 
-                     onClick={() => handleChangeImage(item)}
-                     className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-xl text-white hover:bg-white hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100"
-                     title="Change Photo"
-                  >
-                     <Camera className="w-5 h-5" />
-                  </button>
+                   </div>
+                   <button 
+                      onClick={() => handleChangeImage(item)}
+                      className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-xl text-white hover:bg-white hover:text-indigo-600 transition-all opacity-0 group-hover:opacity-100"
+                      title="Change Photo"
+                   >
+                      <Camera className="w-5 h-5" />
+                   </button>
                </div>
                
                <div className="p-6">
-                  <div className="flex justify-between items-start mb-2">
-                     <h3 className="text-sm font-black text-slate-800 leading-tight">{item.name}</h3>
+                  <div className="flex justify-between items-start mb-1">
+                     <div>
+                        <h3 className="text-sm font-black text-slate-800 leading-tight">{item.name}</h3>
+                        {item.code && <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider mt-0.5">Code: {item.code}</p>}
+                     </div>
                      <div className="flex gap-0.5">
                         {[...Array(item.spicy)].map((_, i) => (
                           <Flame key={i} className="w-3 h-3 text-rose-500 fill-current" />
@@ -258,7 +316,19 @@ export default function MenuPage() {
            <table className="w-full text-left">
               <thead>
                  <tr className="bg-slate-50/50">
+                    <th className="px-8 py-4 w-10">
+                       <input 
+                         type="checkbox" 
+                         className="rounded border-slate-300"
+                         checked={selectedItems.length === filteredMenu.length && filteredMenu.length > 0}
+                         onChange={(e) => {
+                           if (e.target.checked) setSelectedItems(filteredMenu.map(i => i.id));
+                           else setSelectedItems([]);
+                         }}
+                       />
+                    </th>
                     <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Product</th>
+                    <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Code</th>
                     <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Category</th>
                     <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Price</th>
                     <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
@@ -268,8 +338,16 @@ export default function MenuPage() {
               </thead>
               <tbody className="divide-y divide-slate-50">
                  {filteredMenu.map((item) => (
-                   <tr key={item.id} className="hover:bg-slate-50 transition-colors group cursor-pointer">
+                   <tr key={item.id} className={cn("hover:bg-slate-50 transition-colors group cursor-pointer", selectedItems.includes(item.id) && "bg-indigo-50/30")}>
                       <td className="px-8 py-4">
+                        <input 
+                          type="checkbox" 
+                          className="rounded border-slate-300"
+                          checked={selectedItems.includes(item.id)}
+                          onChange={() => toggleSelect(item.id)}
+                        />
+                      </td>
+                      <td className="px-8 py-4" onClick={() => handleEdit(item)}>
                          <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl overflow-hidden shadow-sm border border-slate-100">
                               <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
@@ -277,6 +355,7 @@ export default function MenuPage() {
                             <span className="text-sm font-black text-slate-800">{item.name}</span>
                          </div>
                       </td>
+                      <td className="px-8 py-4 text-xs font-black text-indigo-500 uppercase">{item.code || '-'}</td>
                       <td className="px-8 py-4 text-xs font-bold text-slate-500 uppercase">{item.category}</td>
                       <td className="px-8 py-4 text-sm font-black text-indigo-600 font-mono">₹{item.price}</td>
                       <td className="px-8 py-4">
@@ -333,21 +412,33 @@ export default function MenuPage() {
                        <input 
                          type="text" 
                          required
+                         placeholder="e.g. Butter Chicken"
                          className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none"
                          value={formData.name}
                          onChange={(e) => setFormData({...formData, name: e.target.value})}
                        />
                     </div>
                     <div className="space-y-1.5">
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Price (₹)</label>
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Item Code</label>
                        <input 
-                         type="number" 
-                         required
+                         type="text" 
+                         placeholder="e.g. BC101"
                          className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none"
-                         value={formData.price}
-                         onChange={(e) => setFormData({...formData, price: e.target.value})}
+                         value={formData.code}
+                         onChange={(e) => setFormData({...formData, code: e.target.value})}
                        />
                     </div>
+                 </div>
+
+                 <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Price (₹)</label>
+                    <input 
+                      type="number" 
+                      required
+                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500/10 outline-none"
+                      value={formData.price}
+                      onChange={(e) => setFormData({...formData, price: e.target.value})}
+                    />
                  </div>
 
                  <div className="space-y-1.5">
