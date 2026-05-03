@@ -1,5 +1,4 @@
 
-
 interface KOTProps {
   orderId: string;
   tableNo: string;

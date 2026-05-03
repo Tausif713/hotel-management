@@ -1,5 +1,4 @@
 
-
 interface ReceiptProps {
   hotelName: string;
   tagline?: string;
