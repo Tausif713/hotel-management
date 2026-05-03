@@ -25,11 +25,14 @@ export const PrintReceipt = ({
         <div className="flex justify-between items-start mb-8">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">{hotelName}</h1>
-            <p className="text-sm text-slate-500 font-medium mt-1">Table: {tableNo} | Dine In</p>
+            {tagline && <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">{tagline}</p>}
+            <p className="text-sm text-slate-500 font-medium mt-2">Table: {tableNo} | Dine In</p>
           </div>
           <div className="text-right text-xs text-slate-400 font-bold uppercase tracking-widest">
             <p>Invoice: #{Math.floor(Math.random() * 10000)}</p>
             <p className="mt-1">Date: {new Date().toLocaleDateString()}</p>
+            {phone && <p className="mt-2 text-indigo-500 lowercase font-black tracking-tighter">ph: {phone}</p>}
+            {gstin && <p className="mt-1 text-rose-500 font-black tracking-tighter">gstin: {gstin}</p>}
           </div>
         </div>
 
